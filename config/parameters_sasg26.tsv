@@ -29,3 +29,9 @@ camera_dist	3D twin camera distance	DAS-map main view az180 el30 fov30 perspecti
 cam_scale	Framing adjustment on dist	Plant filled too little at 1.00	0.88	-	[ASSUMED: visual framing]	team	provisional		assumed
 lift	Fibre display lift above terrain	Display only	0.012	km	[ASSUMED: display]	team	provisional		assumed
 veh_dfence	Vehicle distance from fence (service road, OSM)	Illustrative non-threat position	45	m	[ASSUMED: ILLUSTRATIVE position; road geometry COMPUTED-MAP]	team	provisional		assumed
+ellipse_along	DAS localisation 1-sigma along fence	Illustrative ellipse (engine position errors 0.5-5 m)	5	m	[ASSUMED: ILLUSTRATIVE; simulated error <= 5 m, Stage F]	team	provisional		assumed
+ellipse_across	DAS localisation 1-sigma across fence	Illustrative ellipse	9	m	[ASSUMED: ILLUSTRATIVE]	team	provisional		assumed
+cam_spacing	Fixed camera spacing (map and reid row)	reid_grid row spacing_m = 20	20	m	[SOURCE: full-das reid_grid.csv row]	team	provisional		source
+cam_range	Fixed camera range / FOV (drawn)	Illustrative cone	55 / 90	m / deg	[ASSUMED: ILLUSTRATIVE]	team	provisional		assumed
+person_link_acc	Person link accuracy	SIMULATED (full-das re-ID grid)	0.9992	-	[SOURCE: full-das reid_grid.csv row]	team	approved		source
+person_link_rate	Person link rate	SIMULATED (full-das re-ID grid)	0.9298	-	[SOURCE: full-das reid_grid.csv row]	team	approved		source
