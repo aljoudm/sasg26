@@ -47,7 +47,7 @@ camTrk = path(inCone(path, near), :);  camTrk = camTrk(1:3:end, :);
 [~, nn] = min((((F.lon - Zs.G.lon0) * Zs.G.kx / 1e3)' - (Zs.Z.piece.x / 1e3)) .^ 2 + (((F.lat - Zs.G.lat0) * Zs.G.ky / 1e3)' - (Zs.Z.piece.y / 1e3)) .^ 2, [], 1);
 zone = Zs.Z.zone(Zs.Z.piece.cell(nn));
 %% figure
-W = round(cfg.figSizeIn(1) * 96);  Hh = round(cfg.figSizeIn(2) * 96);
+W = round(cfg.figSizeIn(1) * 96);  Hh = round(cfg.figSizeIn(2) * 96 * 0.947);     % exported height is not the nominal one; 0.947 gives 1.74:1
 fig = figure('Color', 'w', 'Position', [60 40 W Hh], 'Units', 'pixels', 'Visible', 'off');
 ax = axes(fig, 'Position', [0.008 0.215 0.640 0.775]);  hold(ax, 'on');
 image(ax, [-600 600], [452 -452], img);  set(ax, 'YDir', 'normal');
