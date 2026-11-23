@@ -1,2 +1,5 @@
 data/*.json
 *.asv
+data/dem/tex_plant_hr.jpg
+data/dem/shaded_*.jpg
+data/osm_waterways.json

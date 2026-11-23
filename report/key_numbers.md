@@ -60,3 +60,12 @@ Cameras: none located from a source, none drawn (Stage G not run). No drones, UA
 | person_link_rate, same row | 0.9298 | - | same | same |
 | Fibre path from fence crossing to control room | 6.5 | km | `results/scenario.mat` | `scenario_sudair` |
 Illustrative [ASSUMED], not results: DAS ellipse 1-sigma 5 m along / 9 m across, 7 fixed cameras at 20 m spacing (reid row), FOV 90 deg, range 55 m, path geometry. Figure: `poster_figs/intruder_map.png|pdf` (1.74:1, 300 dpi). No profiling, no height estimation, no drones or patrols.
+
+## Stage E restyle (`src/viz/render_twin_sudair.m`; numbers of A-F unchanged)
+| Quantity | Value | File |
+| --- | --- | --- |
+| Vertical exaggeration | x4 (display only) | `poster_figs/twin3d.png` attribution line |
+| Hillshade sun / blend / contour interval | az 315 / el 25 / 0.9 / 10 m (display only) | `src/viz/sasg_viz_params.m` |
+| OSM waterways in the AOI | 174 features (82 drawn inside the view box) | `data/osm_waterways.json` |
+| Camera dist (final) | 11.802 = 53 x 10.73/46.66 x 0.88 x 1.10 [DERIVED] | `src/viz/viz_cfg.m`, `render_twin_sudair` |
+| Outputs | `poster_figs/twin3d.png|pdf` 2610x1500 (1.74:1, 300 dpi); `poster_figs/twin3d_zoom.png|pdf` 2000x1500 (4:3, 300 dpi); before: `poster_figs/twin3d_before.png` | |

@@ -1,118 +1,122 @@
-function png = render_twin_sudair(dpi, distScale)
-% RENDER_TWIN_SUDAIR  Stage E. 3D digital twin of Sudair PV in the DAS-map main_static style (light theme): satellite texture draped on the
-% Copernicus DEM, fence fibre coloured by zone, interrogator in the substation/control building with its two channels, 380 kV substation (Hot),
-% one intrusion (detected -> human -> ALARM), one vehicle on the access road (logged), status panel, DAS trace inset. Cameras only as
-% verification asset (none placed here), NO drones / UAVs / patrols. Output: poster_figs/twin3d.png (+ .pdf), ~1.74:1.
+function png = render_twin_sudair(dpi, mode, distScale)
+% RENDER_TWIN_SUDAIR  Stage E (restyled). 3D digital twin of Sudair PV in the DAS-map style, built from the DAS-map drawing code
+% (third_party/dasmap: draw_terrain, draw_risk, draw_assets, draw_trace, halo_text, set_camera, get_theme, panel_axes, north_arrow; adapted copies
+% in src/viz for draw_fibre / draw_events / draw_status). mode 'main' -> poster_figs/twin3d.png (1.74:1); 'zoom' -> poster_figs/twin3d_zoom.png (4:3).
+% Real data only; display choices in sasg_viz_params.m. No drones, UAVs, patrols or C2. Cameras: none placed.
 if nargin < 1, dpi = 300; end
-c = sasg_config();  cfg = viz_cfg('light');  if nargin > 1, cfg.camera.dist = cfg.camera.dist * distScale; end
-th = cfg.theme;  col = cfg.col;  zc = cfg.zoneCol;  lw = cfg.gfx;  fn = cfg.font;
-tcfg = prepare_terrain_sudair();  tcfg.imageryCredit = cfg.imageryCredit;
-T = load_terrain(tcfg);  scene.T = T;  scene.cfg = cfg;  scene.th = th;
-F = load(fullfile(c.resDir, 'placement.mat')).F;  Sc = load(fullfile(c.resDir, 'scenario.mat')).Sc;
-Zs = load(fullfile(c.zonesDir, 'zones.mat'));  Z = Zs.Z;  S = run_das_sudair();
-lift = 0.012;
-X = T.toX(F.lon);  Y = T.toY(F.lat);  H = T.heightXY(X, Y);  Zf = H + lift;
-% zone per fibre point = zone of the nearest boundary piece (zone frame -> km)
-px = Z.piece.x / 1e3;  py = Z.piece.y / 1e3;  kzx = Zs.G.kx / 1e3;  kzy = Zs.G.ky / 1e3;
-fxz = (F.lon - Zs.G.lon0) * kzx;  fyz = (F.lat - Zs.G.lat0) * kzy;
-[~, nn] = min((fxz - px') .^ 2 + (fyz - py') .^ 2, [], 2);  zone = Z.zone(Z.piece.cell(nn));
-%% figure
-W = round(cfg.figSizeIn(1) * 96);  Hh = round(cfg.figSizeIn(2) * 96);
-fig = figure('Color', th.bg, 'Position', [60 40 W Hh], 'Units', 'pixels', 'Visible', 'off');
+if nargin < 2, mode = 'main'; end
+if nargin < 3, distScale = 1.1; end
+c = sasg_config();  sc = build_twin_scene('light');  cfg = sc.cfg;  th = cfg.theme;  col = cfg.col;  zc = cfg.zoneCol;  lw = cfg.gfx;  fn = cfg.font;  vp = sc.vp;
+T = sc.T;  F = sc.fibre;  E = sc.events;  isZoom = strcmp(mode, 'zoom');
+if isZoom, asp = 4 / 3; else, asp = 1.74; end
+Hh = 480;  W = round(Hh * asp);  fig = figure('Color', vp.haze_col, 'Position', [10 10 W Hh], 'Units', 'pixels', 'Visible', 'off');
+drawnow;  Hh = fig.Position(4);  W = fig.Position(3);  cfg.figSizeIn = [W Hh] / 96;  sc.cfg = cfg;
 ax = axes(fig, 'Position', [0 0 1 1]);  hold(ax, 'on');
-draw_terrain(ax, scene, 'satellite', true);
-% fibre by zone (glow + core), closed ring
-xr = [X; X(1)];  yr = [Y; Y(1)];  zr = [Zf; Zf(1)];  zn = [zone; zone(1)];
+%% terrain (+ real contours, real OSM waterways)
+draw_terrain(ax, sc, 'satellite', true);
+X = F.x;  Y = F.y;  bb = [min(X) max(X) min(Y) max(Y)] + [-3 3 -3 3];
+S0 = load(sc.tcfg.demMat);  latA = flipud(S0.lat(:));  Zc = imgaussfilt(flipud(double(S0.Z)), 1.5);
+lev = ceil(min(Zc(:)) / vp.contour_m) * vp.contour_m : vp.contour_m : max(Zc(:));
+Cm = contourc(double(S0.lon(:))', double(latA)', Zc, lev);  k = 1;  segs = struct('lvl', {}, 'x', {}, 'y', {});
+while k < size(Cm, 2)
+    n = Cm(2, k);  lvl = Cm(1, k);  p = Cm(:, k + 1:k + n);  x = T.toX(p(1, :))';  y = T.toY(p(2, :))';  k = k + n + 1;
+    in = x >= bb(1) & x <= bb(2) & y >= bb(3) & y <= bb(4);  x(~in) = NaN;  y(~in) = NaN;
+    if nnz(in) > 6, segs(end + 1) = struct('lvl', lvl, 'x', x, 'y', y); end %#ok<AGROW>
+end
+for s = segs, plot3(ax, s.x, s.y, T.heightXY(s.x, s.y) + 0.010, '-', 'Color', [1 1 1 0.42], 'LineWidth', 0.35); end
+nWw = 0;  wf = fullfile(c.dataDir, 'osm_waterways.json');
+if isfile(wf)
+    dw = jsondecode(fileread(wf, 'Encoding', 'UTF-8'));
+    for q = 1:numel(dw.elements)
+        if iscell(dw.elements), e = dw.elements{q}; else, e = dw.elements(q); end
+        if ~isfield(e, 'geometry'), continue; end
+        wx = T.toX([e.geometry.lon]');  wy = T.toY([e.geometry.lat]');  in = wx >= bb(1) & wx <= bb(2) & wy >= bb(3) & wy <= bb(4);  wx(~in) = NaN;  wy(~in) = NaN;
+        if any(in), plot3(ax, wx, wy, T.heightXY(wx, wy) + 0.011, '-', 'Color', [0.30 0.45 0.62 0.85], 'LineWidth', 0.6);  nWw = nWw + 1; end
+    end
+end
+%% risk glow, zone bands, fibre, assets, events
+if ~isZoom, draw_risk(ax, sc); end
+n = F.n;  sgn = sign(sum((X - circshift(X, -1)) .* (Y + circshift(Y, -1))));
+xs = movmean([X; X; X], 9);  ys = movmean([Y; Y; Y], 9);  xs = xs(n + 1:2 * n);  ys = ys(n + 1:2 * n);
+tx = circshift(xs, -1) - circshift(xs, 1);  ty = circshift(ys, -1) - circshift(ys, 1);  tn = hypot(tx, ty);  nx = ty ./ tn * sgn;  ny = -tx ./ tn * sgn;
+xo = X + vp.band_km * nx;  yo = Y + vp.band_km * ny;  xi = X - 0.25 * vp.band_km * nx;  yi = Y - 0.25 * vp.band_km * ny;
 for z = 1:3
-    m = zn == z;  m2 = m(1:end-1) & m(2:end);  xs = xr; ys = yr; zs = zr;  xs([false; ~m2]) = NaN;  ys([false; ~m2]) = NaN;  zs([false; ~m2]) = NaN;
-    plot3(ax, xs, ys, zs, '-', 'Color', [zc(z, :) 0.30], 'LineWidth', 5.5 * lw);
-    plot3(ax, xs, ys, zs + 0.002, '-', 'Color', zc(z, :), 'LineWidth', 1.9 * lw);
+    m = F.zone == z;  m = m & circshift(m, -1);  idx = [(1:n)'; 1];  mm = [m; m(1)];
+    XB = [xi(idx)'; xo(idx)'];  YB = [yi(idx)'; yo(idx)'];  XB(:, ~mm) = NaN;  YB(:, ~mm) = NaN;
+    ZB = [T.heightXY(xi(idx), yi(idx))'; T.heightXY(xo(idx), yo(idx))'] + 0.014;
+    surface(ax, XB, YB, ZB, 'FaceColor', zc(z, :), 'EdgeColor', 'none', 'FaceAlpha', 0.55);
 end
-% substation polygon (Hot) draped
-Ssub = load(fullfile(c.dataDir, 'substations.mat')).S;  sub = Ssub([Ssub.id] == c.subWayId);
-sx = T.toX(sub.g(:, 2));  sy = T.toY(sub.g(:, 1));
-patch(ax, sx, sy, T.heightXY(sx, sy) + 0.006, [1 1 1], 'FaceAlpha', 0.55, 'EdgeColor', zc(3, :), 'LineWidth', 1.6 * lw);
-% interrogator at the building + lead-ins + channels
-bx = T.toX(F.building(2));  by = T.toY(F.building(1));  bz = T.heightXY(bx, by);
-ex = X(F.entryIdx);  ey = Y(F.entryIdx);  ez = Zf(F.entryIdx);
-plot3(ax, [bx ex], [by ey], [bz + 0.04 ez], '-', 'Color', th.frame, 'LineWidth', 1.4 * lw);
-plot3(ax, [bx bx], [by by], [bz bz + 0.12], '-', 'Color', th.frame, 'LineWidth', 1.4 * lw);
-scatter3(ax, bx, by, bz + 0.12, 70, 's', 'MarkerFaceColor', col.iu, 'MarkerEdgeColor', th.frame, 'LineWidth', 1.1);
-for k = 1:2    % channel direction arrowheads ~ 400 m from the entry
-    idx = F.ch(k).idx;  q = idx(min(25, numel(idx)));  q2 = idx(min(26, numel(idx)));
-    quiver3(ax, X(q), Y(q), Zf(q) + 0.01, X(q2) - X(q), Y(q2) - Y(q), 0, 0, 'Color', th.frame, 'LineWidth', 1.3, 'MaxHeadSize', 6000, 'Autoscale', 'off');
-end
-% intrusion
-it = Sc.intr;  ix = X(it.idx);  iy = Y(it.idx);  iz = H(it.idx);  o = it.outward;  tl = 0.80;
-tx = ix + o(1) * linspace(tl, -0.35, 30)';  ty = iy + o(2) * linspace(tl, -0.35, 30)';
-[bx2, by2] = meshgrid(linspace(-0.6, 0.6, 40));  r2 = hypot(bx2, by2);
-surface(ax, ix + bx2, iy + by2, T.heightXY(ix + bx2, iy + by2) + 0.012, cat(3, ones(size(r2)) * col.red(1), ones(size(r2)) * col.red(2), ones(size(r2)) * col.red(3)), ...
-    'FaceColor', 'interp', 'EdgeColor', 'none', 'FaceAlpha', 'interp', 'AlphaData', 0.6 * max(1 - r2 / 0.6, 0) .^ 1.4, 'AlphaDataMapping', 'none');
-plot3(ax, tx, ty, T.heightXY(tx, ty) + 0.016, ':', 'Color', [1 0.45 0.4], 'LineWidth', 2.2 * lw);
-for rr = [0.15 0.3 0.45]
-    a = linspace(0, 2 * pi, 60)';  plot3(ax, ix + rr * cos(a), iy + rr * sin(a), T.heightXY(ix + rr * cos(a), iy + rr * sin(a)) + 0.018, '-', 'Color', [col.red 0.9 - 0.9 * rr], 'LineWidth', 1.4 * lw);
-end
-scatter3(ax, tx(1), ty(1), T.heightXY(tx(1), ty(1)) + 0.02, 34, 'o', 'MarkerFaceColor', col.red, 'MarkerEdgeColor', [1 1 1], 'LineWidth', 0.9);
-% vehicle on the access road (highlight the OSM road)
-Rr = load(fullfile(c.dataDir, 'roads_osm.mat')).roads;  rd = Rr(Sc.veh.road_k);  rx = T.toX(rd.lon);  ry = T.toY(rd.lat);
-plot3(ax, rx, ry, T.heightXY(rx, ry) + 0.01, '-', 'Color', [col.yellow 0.95], 'LineWidth', 2.0 * lw);
-vx = T.toX(Sc.veh.lon);  vy = T.toY(Sc.veh.lat);
-scatter3(ax, vx, vy, T.heightXY(vx, vy) + 0.02, 120, 'o', 'MarkerFaceColor', col.yellow, 'MarkerFaceAlpha', 0.25, 'MarkerEdgeColor', 'none');
-scatter3(ax, vx, vy, T.heightXY(vx, vy) + 0.02, 24, 'o', 'MarkerFaceColor', col.yellow, 'MarkerEdgeColor', [1 1 1], 'LineWidth', 0.7);
-% camera view (DAS-map: target = centre of the fibre path bbox)
+draw_fibre_sudair(ax, sc, lw);
+patch(ax, sc.sub.x, sc.sub.y, T.heightXY(sc.sub.x, sc.sub.y) + 0.016, [1 1 1], 'FaceAlpha', 0.5, 'EdgeColor', zc(3, :), 'LineWidth', 1.4 * lw);
+bx = F.iuX;  by = F.iuY;  bz = F.iuZ;  ex = X(sc.F0.entryIdx);  ey = Y(sc.F0.entryIdx);  ez = F.z(sc.F0.entryIdx);
+plot3(ax, [bx ex], [by ey], [bz + 0.04 ez], '-', 'Color', [col.cyan 0.9], 'LineWidth', 1.2 * lw);
+draw_assets_sudair(ax, sc, lw);
+if isZoom, sc.heatScale = 0.30; end
+draw_events_sudair(ax, sc, lw);
+%% camera
 axis(ax, 'off');  ax.DataAspectRatio = [1 1 1];  ax.Clipping = 'off';
 mg = 2.5;  ax.XLim = [min(X) - mg, max(X) + mg];  ax.YLim = [min(Y) - mg, max(Y) + mg];  ax.ZLim = [0 8];
-tgt = [mean([min(X) max(X)]), mean([min(Y) max(Y)]), mean(Zf)];
-set_camera(ax, tgt, cfg.camera);  drawnow;
-% labels (outside the fibre where possible)
-lab = struct('size', 7.5, 'weight', 'bold');  ar = char(8594);
-ztop = max(Zf) + 0.4;
-halo_text(ax, ix + o(1) * 1.5, iy + o(2) * 1.5, iz + 0.25, ['Intruder: detected ' ar ' human ' ar ' ALARM'], lab, th.intLbl, scene);
-plot3(ax, [ix ix + o(1) * 1.3], [iy iy + o(2) * 1.3], [iz + 0.03 iz + 0.22], '-', 'Color', [th.intLbl 0.8], 'LineWidth', 0.8);
-halo_text(ax, vx + 0.4, vy + 2.3, ztop + 0.3, ['Vehicle on access road ' ar ' logged'], lab, th.aniLbl, scene);
-plot3(ax, [vx vx + 0.4], [vy vy + 2.3], [bz + 0.03 ztop + 0.28], '-', 'Color', [th.aniLbl 0.8], 'LineWidth', 0.8);
-halo_text(ax, bx - 2.6, by + 1.2, ztop + 0.1, '380 kV substation (Hot)', lab, th.lblText, scene);
-plot3(ax, [bx - 1.6 sx(1)], [by + 1.1 sy(1)], [ztop + 0.08 bz + 0.02], '-', 'Color', [th.lblText 0.6], 'LineWidth', 0.6);
-halo_text(ax, bx - 2.0, by - 0.5, ztop - 0.1, 'Interrogator + control room', lab, th.iuLbl, scene);
-plot3(ax, [bx - 1.1 bx], [by - 0.45 by], [ztop - 0.12 bz + 0.12], '-', 'Color', [th.iuLbl 0.7], 'LineWidth', 0.6);
-%% panels
-Lstat = [0.012 0.02 0.235 0.27];
-bg = panel_axes(fig, Lstat, th, 1);  hin = Lstat(4) * cfg.figSizeIn(2);  Y_ = @(inch) 1 - inch / hin;
-tx_ = @(xx, inch, s, cc, st, ha) text(bg, xx, Y_(inch), s, 'Color', cc, 'FontName', fn.name, 'FontSize', st.size, 'FontWeight', st.weight, 'HorizontalAlignment', ha, 'VerticalAlignment', 'middle');
-bold = struct('size', fn.panel.size, 'weight', 'bold');
-tx_(0.05, 0.11, 'STATUS', th.muted, fn.title, 'left');
-rows = {'Fibre length', sprintf('%.1f km', F.fibreTotalKm); 'Interrogator', sprintf('%d', F.N_IU); 'Channels (active / spare)', sprintf('%d / %d', F.N_ch_active, F.N_ch_spare);
-        'Sensing points (fibre / 2 m)', sprintf('%s', regexprep(sprintf('%d', F.N_sensing), '(\d)(?=(\d{3})+$)', '$1,')); 'Cameras', 'none placed'};
-y = 0.27;  for i = 1:size(rows, 1), tx_(0.05, y, rows{i, 1}, th.muted, fn.panel, 'left');  tx_(0.95, y, rows{i, 2}, th.text, bold, 'right');  y = y + 0.135; end
-tx_(0.05, hin - 0.1, 'Simulated scenario; verification by cameras only', th.muted, fn.note, 'left');
-% DAS trace inset
-Ltr = [0.655 0.02 0.335 0.27];
-bg2 = panel_axes(fig, Ltr, th, 1);  text(bg2, 0.04, 0.9, [char(966) '-OTDR SIMULATION, FEBUS A1-NEO'], 'Color', th.muted, 'FontName', fn.name, 'FontSize', fn.title.size, 'FontWeight', 'bold');
-ta = axes(fig, 'Position', [Ltr(1) + 0.13 * Ltr(3), Ltr(2) + 0.25 * Ltr(4), 0.82 * Ltr(3), 0.46 * Ltr(4)], 'Color', 'none');  hold(ta, 'on');
-plot(ta, S.z / 1e3, S.act, '-', 'Color', th.trace, 'LineWidth', 0.5);  yline(ta, S.thr, '--', 'Color', th.thr, 'LineWidth', 0.7);
-for i = 1:numel(S.tab)
-    t = string(S.tab(i).type);  cc = th.muted;  if t == "walk", cc = th.intLbl; elseif t == "vehicle", cc = th.aniLbl; end
-    plot(ta, S.tab(i).z_est / 1e3, S.tab(i).peak_nm, 'o', 'MarkerSize', 3, 'MarkerFaceColor', cc, 'MarkerEdgeColor', 'none');
+cam = cfg.camera;  cam.dist = cam.dist * distScale;
+if isZoom, tgt = [E.cross(1) + 0.05, E.cross(2) - 0.05, E.cross(3) + 0.05];  cam.dist = 1.9;
+else, tgt = [mean([min(X) max(X)]), mean([min(Y) max(Y)]), mean(F.z)]; end
+set_camera(ax, tgt, cam);  drawnow;
+%% labels (halo text)
+lab = struct('size', 7.5, 'weight', 'bold');  arr = char(8594);  o = sc.Sc.intr.outward;  ix = E.cross(1);  iy = E.cross(2);  iz = E.cross(3);
+ztop = max(F.z) + 0.55;
+if isZoom
+    halo_text(ax, ix + o(1) * 0.55, iy + o(2) * 0.55, iz + 0.30, ['Intruder: detected ' arr ' human ' arr ' ALARM'], lab, th.intLbl, sc);
+    plot3(ax, [ix ix + o(1) * 0.5], [iy iy + o(2) * 0.5], [iz + 0.03 iz + 0.27], '-', 'Color', [th.intLbl 0.8], 'LineWidth', 0.8);
+else
+    halo_text(ax, ix + o(1) * 1.5, iy + o(2) * 1.5, iz + 0.45, ['Intruder: detected ' arr ' human ' arr ' ALARM'], lab, th.intLbl, sc);
+    plot3(ax, [ix ix + o(1) * 1.3], [iy iy + o(2) * 1.3], [iz + 0.03 iz + 0.42], '-', 'Color', [th.intLbl 0.8], 'LineWidth', 0.8);
+    vx = E.vehicle(1);  vy = E.vehicle(2);  vz = E.vehicle(3);
+    halo_text(ax, vx + 0.4, vy + 2.3, ztop + 0.3, ['Vehicle on access road ' arr ' logged'], lab, th.aniLbl, sc);
+    plot3(ax, [vx vx + 0.4], [vy vy + 2.3], [vz + 0.03 ztop + 0.28], '-', 'Color', [th.aniLbl 0.8], 'LineWidth', 0.8);
+    halo_text(ax, bx - 2.6, by + 1.2, ztop + 0.1, '380 kV substation (Hot)', lab, th.lblText, sc);
+    plot3(ax, [bx - 1.6 sc.sub.x(1)], [by + 1.1 sc.sub.y(1)], [ztop + 0.08 bz + 0.02], '-', 'Color', [th.lblText 0.6], 'LineWidth', 0.6);
+    halo_text(ax, bx - 2.0, by - 0.5, ztop - 0.1, 'Interrogator + control room', lab, th.iuLbl, sc);
+    plot3(ax, [bx - 1.1 bx], [by - 0.45 by], [ztop - 0.12 bz + 0.15], '-', 'Color', [th.iuLbl 0.7], 'LineWidth', 0.6);
+    pb = [min(X) max(X) min(Y) max(Y)];  used = [];
+    for q = 1:numel(segs)      % 2-3 real contours labelled with their elevation, near the southern edge of the plant
+        s = segs(q);  if numel(used) >= vp.contour_label || any(abs(s.lvl - used) < 1e-9), continue; end
+        ok = find(s.x >= pb(1) - 0.5 & s.x <= pb(2) & s.y >= pb(3) - 2.5 & s.y < pb(3) + 0.8);  if numel(ok) < 4, continue; end
+        j = ok(round(end / 2));  halo_text(ax, s.x(j), s.y(j), T.heightXY(s.x(j), s.y(j)) + 0.04, sprintf('%d m', round(s.lvl)), struct('size', 6, 'weight', 'bold'), [0.25 0.25 0.25], sc);  used(end + 1) = s.lvl; %#ok<AGROW>
+    end
 end
-ta.FontName = fn.name;  ta.FontSize = fn.note.size;  ta.XColor = th.muted;  ta.YColor = th.muted;  ta.TickDir = 'out';  ta.Box = 'off';
-xlim(ta, [0 S.z(end) / 1e3]);  ylim(ta, [0 max(S.act) * 1.15]);  xlabel(ta, 'Distance along channel (km)', 'FontSize', fn.note.size);  ylabel(ta, 'nm rms', 'FontSize', fn.note.size);
-rowsT = {th.intLbl, ['walking = map intruder ' ar ' ALARM']; th.aniLbl, ['vehicle = map vehicle ' ar ' logged']};
-for k = 1:2, yy = 0.10 - 0 + (k - 1) * 0; end
-text(bg2, 0.04, 0.78, ['\color[rgb]{' sprintf('%.2f %.2f %.2f', th.intLbl) '}' char(9679) ' \color[rgb]{' sprintf('%.2f %.2f %.2f', th.text) '}walking = intruder   \color[rgb]{' sprintf('%.2f %.2f %.2f', th.aniLbl) '}' char(9679) ' \color[rgb]{' sprintf('%.2f %.2f %.2f', th.text) '}vehicle'], 'FontName', fn.name, 'FontSize', fn.note.size, 'Interpreter', 'tex', 'VerticalAlignment', 'middle');
-% legend (zones) upper-left, credit, north arrow
+%% panels, legend, credit, north arrow
+if ~isZoom
+    draw_status_sudair(fig, [0.012 0.02 0.29 0.27], sc);
+    draw_trace(fig, [0.655 0.02 0.335 0.27], sc);
+    lg = panel_axes(fig, [0.312 0.105 0.333 0.14], th, 1);
+    items = {sprintf('Hot fence %.1f km', sc.Z.kmZone(3)), sprintf('Neutral fence %.1f km', sc.Z.kmZone(2)), sprintf('Cold fence %.1f km', sc.Z.kmZone(1)), 'Weak-coverage glow', ...
+             'DAS fibre (energy)', 'Light pulse', 'Interrogator / seg. end', 'Intruder / vehicle'};
+    for q = 1:8
+        cx = 0.03 + 0.50 * (q > 4);  cy = 0.86 - mod(q - 1, 4) * 0.26;
+        switch q
+            case {1, 2, 3}, patch(lg, cx + [0 0.07 0.07 0], cy + [-0.07 -0.07 0.07 0.07], zc(4 - q, :), 'FaceAlpha', 0.55, 'EdgeColor', zc(4 - q, :));
+            case 4, patch(lg, cx + [0 0.035 0.035 0], cy + [-0.07 -0.07 0.07 0.07], col.riskLo, 'EdgeColor', 'none'); patch(lg, cx + [0.035 0.07 0.07 0.035], cy + [-0.07 -0.07 0.07 0.07], col.riskHi, 'EdgeColor', 'none');
+            case 5, for r = 1:4, plot(lg, cx + [0 0.0175] + (r - 1) * 0.0175, [cy cy], '-', 'Color', col.fibreCmap(round(1 + (r - 1) * 85), :), 'LineWidth', 1.6); end
+            case 6, plot(lg, cx + [0 0.07], [cy cy], '-', 'Color', [col.cyan 0.55], 'LineWidth', 3.4);  plot(lg, cx + [0 0.07], [cy cy], '-', 'Color', [1 1 1], 'LineWidth', 1.2);
+            case 7, plot(lg, cx + 0.02, cy, 's', 'MarkerSize', 4.2, 'MarkerFaceColor', col.iu, 'MarkerEdgeColor', th.frame);  plot(lg, cx + 0.055, cy, 'd', 'MarkerSize', 3.6, 'MarkerFaceColor', col.yellow, 'MarkerEdgeColor', th.frame);
+            case 8, plot(lg, cx + 0.02, cy, 'o', 'MarkerSize', 4.4, 'MarkerFaceColor', col.red, 'MarkerEdgeColor', th.text, 'LineWidth', 0.4);  plot(lg, cx + 0.055, cy, 'o', 'MarkerSize', 4, 'MarkerFaceColor', col.yellow, 'MarkerEdgeColor', th.text, 'LineWidth', 0.4);
+        end
+        text(lg, cx + 0.09, cy, items{q}, 'Color', th.text, 'FontName', fn.name, 'FontSize', fn.panel.size - 0.6, 'VerticalAlignment', 'middle');
+    end
+end
 oa = axes(fig, 'Position', [0 0 1 1], 'Color', 'none');  hold(oa, 'on');  oa.XLim = [0 1];  oa.YLim = [0 1];  axis(oa, 'off');
-names = {sprintf('Hot fence (%.1f km)', Z.kmZone(3)), sprintf('Neutral fence (%.1f km)', Z.kmZone(2)), sprintf('Cold fence (%.1f km)', Z.kmZone(1))};
-for k = 1:3
-    yy = 0.925 - (k - 1) * 0.042;  plot(oa, [0.015 0.045], [yy yy], '-', 'Color', zc(4 - k, :), 'LineWidth', 2.4);
-    text(oa, 0.052, yy, names{k}, 'Color', th.lblText, 'FontName', fn.name, 'FontSize', fn.panel.size, 'VerticalAlignment', 'middle');
+credit = [cfg.imageryCredit ' Vertical exaggeration x' num2str(vp.VERT_EXAG) '; hillshade from the DEM.'];
+if isZoom
+    text(oa, 0.5, 0.006, strrep(credit, ' Terrain:', [newline 'Terrain:']), 'Color', th.credit, 'FontName', fn.name, 'FontSize', fn.note.size, 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
+else
+    text(oa, 0.4785, 0.006, strrep(strrep(credit, ' Terrain:', [newline 'Terrain:']), ' Vertical', [newline 'Vertical']), 'Color', th.credit, 'FontName', fn.name, 'FontSize', fn.note.size - 0.4, 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 end
-text(oa, 0.451, 0.004, strrep(cfg.imageryCredit, ' Terrain:', [newline 'Terrain:']), 'Color', th.credit, 'FontName', fn.name, 'FontSize', fn.note.size, 'HorizontalAlignment', 'center', 'VerticalAlignment', 'bottom');
 north_arrow(oa, [0.965, 0.80], 0.10, th.text, th.bg, cfg);
-fig.Position = [60 40 W Hh];  drawnow;  pause(0.3);
+drawnow;  pause(0.3);
 if ~exist(c.figDir, 'dir'), mkdir(c.figDir); end
-png = fullfile(c.figDir, 'twin3d.png');
-exportgraphics(fig, png, 'Resolution', dpi, 'BackgroundColor', th.bg);
+if isZoom, nm = 'twin3d_zoom'; else, nm = 'twin3d'; end
+png = fullfile(c.figDir, [nm '.png']);
+fig.PaperPositionMode = 'auto';  fig.InvertHardcopy = 'off';  ax.Color = vp.haze_col;  print(fig, png, '-dpng', sprintf('-r%d', dpi));          % exact pixel size = figure size x dpi/96
 if dpi >= 300, exportgraphics(fig, strrep(png, '.png', '.pdf'), 'ContentType', 'image', 'Resolution', dpi, 'BackgroundColor', th.bg); end
 close(fig);
-fprintf('twin3d: camera dist = %.3f (53 x %.2f/%.2f km diag, scale %.2f) -> %s\n', cfg.camera.dist, cfg.diag_sudair_km, cfg.diag_makkah_km, cfg.camDistScale, png);
+fprintf('%s: dist %.3f, VE x%g, contours %d segments (%d m), waterways drawn %d, false-alarm fibre points %d -> %s\n', nm, cam.dist, vp.VERT_EXAG, numel(segs), vp.contour_m, nWw, sc.nFalse, png);
 end

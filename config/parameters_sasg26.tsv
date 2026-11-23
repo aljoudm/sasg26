@@ -35,3 +35,14 @@ cam_spacing	Fixed camera spacing (map and reid row)	reid_grid row spacing_m = 20
 cam_range	Fixed camera range / FOV (drawn)	Illustrative cone	55 / 90	m / deg	[ASSUMED: ILLUSTRATIVE]	team	provisional		assumed
 person_link_acc	Person link accuracy	SIMULATED (full-das re-ID grid)	0.9992	-	[SOURCE: full-das reid_grid.csv row]	team	approved		source
 person_link_rate	Person link rate	SIMULATED (full-das re-ID grid)	0.9298	-	[SOURCE: full-das reid_grid.csv row]	team	approved		source
+VERT_EXAG	Vertical exaggeration (restyle, supersedes the earlier 2)	Site is flat (687-771 m)	4	-	[ASSUMED: display only] 6 tried first, 4 kept (6 tilted the plant too much)	team	provisional		assumed
+sun	Hillshade sun azimuth / elevation	Low sun from the north-west so dunes and wadis read	315 / 25	deg	[ASSUMED: display only]	team	provisional		assumed
+blend_w	Hillshade blend weight (multiplicative into Esri texture)	Relief readability	0.9	-	[ASSUMED: display only]	team	provisional		assumed
+contour_m	Contour interval from the Copernicus DEM	Real relief lines, 3 labelled	10	m	[ASSUMED: display only]	team	provisional	DEM smoothed 1.5 px	assumed
+haze	Atmospheric haze toward the north edge (max weight)	Depth cue, not applied to the plant	0.40	-	[ASSUMED: display only]	team	provisional		assumed
+img_res	Plant imagery export resolution (Esri refuses < ~1.1 m/px here)	2x2 tiles, 5262 x 4845 px	2.0	m/px	[ASSUMED: display only]	team	provisional	light blur 0.8 px against moire	assumed
+band_km	Zone band width / alpha	Translucent zone band beside the fibre	0.16 km / 0.55	-	[ASSUMED: display only]	team	provisional		assumed
+risk_corridor	Risk glow corridor / threshold	Zones' own slope+road risk, shown within 0.5 km of the fibre; start at P10 of corridor risk	0.5	km	[ASSUMED: display only]	team	provisional		assumed
+glowDilate	Display widening of the energy peak along the fibre	Local peaks are ~20 m wide; widened so the red glow is visible	300	m	[ASSUMED: display only]	team	provisional		assumed
+pulses	Light pulse length / spacing (DAS-map 4.5 / 15 km)	Scaled to a 16 km channel	0.9 / 4	km	[ASSUMED: display only]	team	provisional		assumed
+dist_final	3D twin camera distance, final	az180 el30 fov30 perspective, target = fibre bbox centre	11.802	map units (km)	[DERIVED: same framing as DAS-map main view] 53 x 10.73/46.66 x 0.88 x 1.10	team	provisional	x1.10 added in the restyle for room around the new elements	derived
