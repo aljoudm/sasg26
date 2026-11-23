@@ -4,6 +4,7 @@ root = fileparts(fileparts(mfilename('fullpath')));
 c.root = root;  c.dataDir = fullfile(root, 'data');  c.resDir = fullfile(root, 'results');
 c.zonesDir = fullfile(root, 'results_zones');  c.figDir = fullfile(root, 'poster_figs');
 c.osmWayId = 1317477364;                         % OSM way "Sudair PV IPP" (power=plant, plant:source=solar), found by fetch_boundary_sudair
+c.subWayId = 1317477365;                         % OSM way: 380 kV step-up substation inside the plant
 c.bbox = [25.30 45.30 25.90 45.90];              % [S W N E] search box
 c.area_pub_km2 = 30.2;  c.area_tol = 0.10;       % [SOURCE: nsenergy_sudair]
 c.boundaryCsv = fullfile(c.dataDir, 'boundary_perimeter.csv');

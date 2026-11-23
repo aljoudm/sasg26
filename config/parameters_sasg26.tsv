@@ -8,3 +8,15 @@ R_DAS	Range per channel	FEBUS A1-NEO 20 km option	20	km	[DATASHEET]	team	approve
 N_ch_active	Active channels per interrogator	One per direction	2	-	[DERIVED: two directions along boundary]	team	approved		derived
 T_op	Interrogator operating range	Housed in control room/substation building	5-40	degC	[DATASHEET]	team	approved		source
 dz_res	Spatial resolution	sensing points = fibre/2 m (channel spacing)	2	m	[SIM SETTING]	team	approved		sim
+R_hot_sub	Hot standoff around 380 kV substation polygon	Hot = fence within this distance of the yard (forced class)	500	m	[ASSUMED: ~2x the substation's 312 m long side; standoff for HV-yard perimeter protection, no site standard found]	team	provisional	sensitivity 250 / 1000 m in results_zones/sensitivity.csv	assumed
+cell_size	Zone cell size	20-30 km perimeter (DAS-map used 1000 m for 145 km)	250	m	[ASSUMED: scaled to perimeter]	team	provisional	sensitivity 100 / 500 m	assumed
+zone_k	k-means clusters on non-Hot cells	Hot is forced, remainder split Cold/Neutral	2	-	[ASSUMED: Hot forced by substation distance]	team	provisional		assumed
+cell_risk_pct	Cell risk percentile	DAS-map choice retained	90	%	[ASSUMED: DAS-map method]	team	provisional		assumed
+zone_w	Risk weights slope / road distance	DAS-map intrinsic_risk_grid, unchanged	0.615/0.385	-	[ASSUMED: DAS-map design 0.40/0.25 renormalised]	team	provisional	no wadi term in DAS-map code, not invented (decisions.md)	assumed
+slope_full_deg	Slope saturation	DAS-map value	40	deg	[ASSUMED: DAS-map design value]	team	provisional		assumed
+road_full_m	Road-distance saturation	DAS-map value	3000	m	[ASSUMED: DAS-map design value]	team	provisional		assumed
+lambda_zone	Intrusion rate per zone (events/day)	Not needed for the poster	TBD	events/day	[PLACEHOLDER]	team	tbd	No Sudair source; Makkah values NOT reused	placeholder
+VERT_EXAG	Vertical exaggeration (display only)	DAS-map twin	2	-	[ASSUMED: DAS-map value]	team	provisional		assumed
+aoiMargin	AOI margin around plant bbox (terrain/base texture)	Context	0.05	deg	[ASSUMED: DAS-map value]	team	provisional		assumed
+detailMargin	Margin for plant-detail texture	Context	0.012	deg	[ASSUMED: framing]	team	provisional		assumed
+A_zone_sum	Zone lengths Hot/Neutral/Cold	Sum equals L_boundary	4.523/6.949/20.834	km	[COMPUTED-MAP]	team	approved	sum 32.306 vs 32.304 (local-frame constant); test tolerance 5 m	computed
