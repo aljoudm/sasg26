@@ -38,6 +38,14 @@ header p{margin:0;color:var(--mute);font-size:14px}
 .ve input{width:110px;accent-color:var(--neut)}
 .banner{position:absolute;left:50%;bottom:64px;transform:translateX(-50%);padding:8px 16px;border-radius:10px;font-weight:700;color:#fff;font-size:15px;display:none;white-space:nowrap;box-shadow:0 4px 18px rgba(0,0,0,.35)}
 .banner.alarm{display:block;background:var(--hot)}.banner.logged{display:block;background:#6b7383}.banner.run{display:block;background:rgba(10,16,24,.85)}
+.pip{position:absolute;left:12px;top:12px;width:min(320px,46%);aspect-ratio:3/2;border-radius:10px;border:2px solid #34c27a;overflow:hidden;display:none;box-shadow:0 6px 24px rgba(0,0,0,.45);pointer-events:none}
+.pip.on{display:block}
+.piplbl{position:absolute;left:0;right:0;top:0;padding:4px 8px;font-size:12px;font-weight:600;color:#fff;background:linear-gradient(rgba(0,0,0,.6),transparent)}
+.rec{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b30;margin-right:6px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+.pipbox{position:absolute;border:2px solid #34c27a;border-radius:3px}
+.pipbox::after{content:"tracked · linked to DAS";position:absolute;left:-2px;top:100%;margin-top:2px;background:#34c27a;color:#06210f;font-size:10px;font-weight:700;padding:0 4px;white-space:nowrap}
+.lbl.cam{background:#34c27a;color:#06210f}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:#cfd8e3;font-size:15px;background:#0b1016}
 aside{background:var(--panel);border-left:1px solid var(--rule);overflow-y:auto;padding:16px 18px 24px}
 h2{font-size:13px;font-weight:600;color:var(--mute);margin:18px 0 8px}
@@ -70,7 +78,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 .log li span:last-child{font-weight:700;white-space:nowrap}
 .notes{font-size:12.5px;color:var(--mute);margin-top:18px;border-top:1px solid var(--rule);padding-top:12px}
 .notes p{margin:0 0 6px}
-@media(max-width:600px){.ve{right:auto;left:12px;top:12px;bottom:auto}.ve input{width:80px}.mapbtns button{min-height:40px;padding:6px 10px;font-size:14px}.banner{bottom:62px;font-size:14px}}
+@media(max-width:600px){.ve{right:12px;bottom:62px;top:auto}.pip{width:56%}.compass{width:40px;height:40px}.ve input{width:80px}.mapbtns button{min-height:40px;padding:6px 10px;font-size:14px}.banner{bottom:108px;font-size:14px}}
 @media(max-width:900px){.app{grid-template-columns:1fr;height:auto}.map{height:64vh;min-height:380px}aside{border-left:0;border-top:1px solid var(--rule)}}
 @media(prefers-reduced-motion:reduce){.steps li{transition:none}}
 </style>
@@ -78,7 +86,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 <body>
 <header>
  <h1>Sudair DAS digital twin: inject an event on the fence</h1>
- <p>Pick an event, tap the fence, watch the fibre locate, classify and verify it. All events are simulated.</p>
+ <p>Pick an event and tap the fence. Watch the laser backscatter change, the AI classify it and a camera turn to it. All events are simulated.</p>
 </header>
 <div class="app">
  <div class="map" id="map">
@@ -86,6 +94,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
   <div class="hint" id="hint">Drag to rotate · pinch or scroll to zoom · two fingers to pan · tap the fence</div>
   <div class="compass" title="North"><svg viewBox="-17 -17 34 34" id="needle"><path d="M0-15 5 0 0-3-5 0Z" fill="#E3B02B"/><path d="M0 15 5 0 0 3-5 0Z" fill="#8d9aab"/><text y="11" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">N</text></svg></div>
   <div class="banner" id="banner"></div>
+  <div class="pip" id="pip" aria-label="Live view of the turned camera (simulated)"><div class="pipbox" id="pipbox"></div><div class="piplbl"><span class="rec"></span>Nearest camera · live (simulated)</div></div>
   <div class="mapbtns"><button id="vOver">Overview</button><button id="vTop">Top view</button><button id="vEvent" disabled>Go to event</button></div>
   <label class="ve">Vertical ×<b id="veVal">4</b><input id="ve" type="range" min="1" max="10" step="1" value="4" aria-label="Vertical exaggeration, display only"><small>display only</small></label>
  </div>
@@ -119,323 +128,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
-<script>
-{
-const LAT0 = 25.76607975, LON0 = 45.58630745, KX = 100.13957936, KY = 111.195;   // km per degree
-const ZC = {1: 0x4575B5, 2: 0xE3B02B, 3: 0xD63026}, ZN = {1: "Cold", 2: "Neutral", 3: "Hot"}, ZCSS = {1: "var(--cold)", 2: "var(--neut)", 3: "var(--hot)"};
-const PC = 0.983;
-const EV = {walking: {label: "Walking", ai: "human (walking)", threat: true},
-            digging: {label: "Digging", ai: "digging (cable-theft risk)", threat: true},
-            vehicle: {label: "Vehicle", ai: "vehicle", threat: false}};
-const $ = id => document.getElementById(id);
-const mapEl = $("map");
-let VE = 4, dem, fib, terrain, fibreGroup, eventGroup, pulses = [], chPts = [[], []], lastEvent = null, evType = "walking", seq = 0;
-const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-const xz = (lat, lon) => [(lon - LON0) * KX, -(lat - LAT0) * KY];
-function hAt(lat, lon) {
-  const fx = (lon - dem.lon_w) / (dem.lon_e - dem.lon_w) * (dem.nx - 1), fy = (dem.lat_n - lat) / (dem.lat_n - dem.lat_s) * (dem.ny - 1);
-  const x0 = Math.max(0, Math.min(dem.nx - 2, Math.floor(fx))), y0 = Math.max(0, Math.min(dem.ny - 2, Math.floor(fy)));
-  const tx = Math.min(1, Math.max(0, fx - x0)), ty = Math.min(1, Math.max(0, fy - y0)), z = dem.z, n = dem.nx;
-  const a = z[y0*n+x0], b = z[y0*n+x0+1], c = z[(y0+1)*n+x0], d = z[(y0+1)*n+x0+1];
-  return ((a*(1-tx)+b*tx)*(1-ty) + (c*(1-tx)+d*tx)*ty) / 10;
-}
-const yOf = h => (h - dem.zmin) / 1000 * VE;
-
-const renderer = new THREE.WebGLRenderer({antialias: true});
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-mapEl.prepend(renderer.domElement);
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xcfc6b6);
-scene.fog = new THREE.Fog(0xcfc6b6, 14, 30);
-const camera = new THREE.PerspectiveCamera(35, 1, 0.02, 120);
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.maxPolarAngle = 1.48; controls.minDistance = 0.25; controls.maxDistance = 30;
-controls.screenSpacePanning = false;
-scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 0.75));
-const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(-6, 5, -6); scene.add(sun);
-
-function resize() {
-  const w = mapEl.clientWidth, h = mapEl.clientHeight;
-  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
-}
-new ResizeObserver(resize).observe(mapEl);
-
-async function img(url) { const b = await (await fetch(url)).blob(); return await createImageBitmap(b); }
-
-function buildTerrain(baseImg, plantImg) {
-  const bt = fib.base_tex, pt = fib.plant_tex;
-  const cw = 4096, chh = Math.round(4096 * baseImg.height / baseImg.width);
-  const cv = document.createElement("canvas"); cv.width = cw; cv.height = chh;
-  const g = cv.getContext("2d"); g.drawImage(baseImg, 0, 0, cw, chh);
-  const px = lon => (lon - bt.lon_w) / (bt.lon_e - bt.lon_w) * cw, py = lat => (bt.lat_n - lat) / (bt.lat_n - bt.lat_s) * chh;
-  g.drawImage(plantImg, px(pt.lon_w), py(pt.lat_n), px(pt.lon_e) - px(pt.lon_w), py(pt.lat_s) - py(pt.lat_n));
-  const tex = new THREE.CanvasTexture(cv); tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); tex.encoding = THREE.sRGBEncoding;
-  const nx = dem.nx, ny = dem.ny, pos = new Float32Array(nx * ny * 3), uv = new Float32Array(nx * ny * 2), idx = [];
-  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
-    const lon = dem.lon_w + (dem.lon_e - dem.lon_w) * i / (nx - 1), lat = dem.lat_n - (dem.lat_n - dem.lat_s) * j / (ny - 1);
-    const [x, z] = xz(lat, lon), k = j * nx + i;
-    pos[k*3] = x; pos[k*3+1] = yOf(dem.z[k] / 10); pos[k*3+2] = z;
-    uv[k*2] = (lon - bt.lon_w) / (bt.lon_e - bt.lon_w); uv[k*2+1] = (lat - bt.lat_s) / (bt.lat_n - bt.lat_s);
-    if (i < nx - 1 && j < ny - 1) idx.push(k, k + nx, k + 1, k + 1, k + nx, k + nx + 1);
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
-  geo.setIndex(idx); geo.computeVertexNormals();
-  terrain = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({map: tex}));
-  scene.add(terrain);
-}
-function updateTerrainHeights() {
-  const p = terrain.geometry.attributes.position;
-  for (let k = 0; k < p.count; k++) p.setY(k, yOf(dem.z[k] / 10));
-  p.needsUpdate = true; terrain.geometry.computeVertexNormals();
-}
-
-let fpts = [];
-function fibreVec(k, lift = 0.006) { const [x, z] = xz(fib.lat[k], fib.lon[k]); return new THREE.Vector3(x, yOf(hAt(fib.lat[k], fib.lon[k])) + lift, z); }
-function buildFibre() {
-  if (fibreGroup) scene.remove(fibreGroup);
-  fibreGroup = new THREE.Group(); scene.add(fibreGroup);
-  const n = fib.lat.length; fpts = [];
-  for (let k = 0; k < n; k++) fpts.push(fibreVec(k));
-  let start = 0;
-  while (start < n) {
-    let end = start; while (end + 1 < n && fib.zone[end + 1] === fib.zone[start]) end++;
-    const run = fpts.slice(start, Math.min(n, end + 2)); if (end + 1 >= n) run.push(fpts[0]);
-    if (run.length >= 2) {
-      const curve = new THREE.CatmullRomCurve3(run, false, "centripetal"), seg = Math.max(8, run.length * 3), col = ZC[fib.zone[start]];
-      for (const [core, glow, lod] of [[0.018, 0.055, "far"], [0.005, 0.016, "near"]]) {
-        const a = new THREE.Mesh(new THREE.TubeGeometry(curve, seg, core, 6, false), new THREE.MeshBasicMaterial({color: col}));
-        const b = new THREE.Mesh(new THREE.TubeGeometry(curve, seg, glow, 6, false),
-          new THREE.MeshBasicMaterial({color: col, transparent: true, opacity: 0.3, depthWrite: false, blending: THREE.AdditiveBlending}));
-        a.userData.lod = b.userData.lod = lod; fibreGroup.add(a, b);
-      }
-    }
-    start = end + 1;
-  }
-  // channels as ordered point lists from the entry
-  chPts = [[], []]; const e = fib.entry;
-  for (let s = 0; s < n; s++) { const a = (e + s) % n, b = (e - s + n) % n; if (fib.ch[a] === 1) chPts[0].push(fpts[a]); if (fib.ch[b] === 2) chPts[1].push(fpts[b]); }
-  // interrogator + lead-in
-  const [bx, bz] = xz(fib.building[0], fib.building[1]), by = yOf(hAt(fib.building[0], fib.building[1]));
-  const iu = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.06, 0.09), new THREE.MeshBasicMaterial({color: 0xffffff}));
-  iu.position.set(bx, by + 0.03, bz); fibreGroup.add(iu);
-  const lead = new THREE.CatmullRomCurve3([new THREE.Vector3(bx, by + 0.01, bz), fpts[e]]);
-  fibreGroup.add(new THREE.Mesh(new THREE.TubeGeometry(lead, 8, 0.014, 6, false), new THREE.MeshBasicMaterial({color: 0xffffff})));
-  anchors.iu = new THREE.Vector3(bx, by + 0.07, bz);
-  const [sx, sz] = xz(fib.substation[0], fib.substation[1]); anchors.sub = new THREE.Vector3(sx, yOf(hAt(...fib.substation)) + 0.05, sz);
-}
-// pulses: glowing sprites travelling outward from the interrogator on both channels
-function glowTex(r, g, b) {
-  const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d");
-  const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
-  gr.addColorStop(0, `rgba(${r},${g},${b},1)`); gr.addColorStop(0.35, `rgba(${r},${g},${b},.55)`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
-  x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c);
-}
-const pulseMat = new THREE.SpriteMaterial({map: glowTex(220, 250, 255), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true});
-function buildPulses() {
-  pulses.forEach(p => scene.remove(p.s)); pulses = [];
-  for (let c = 0; c < 2; c++) for (let i = 0; i < 7; i++) {
-    const s = new THREE.Sprite(pulseMat); s.scale.set(0.16, 0.16, 1); scene.add(s); pulses.push({s, c, t: i / 7});
-  }
-}
-const anchors = {};
-const labels = {};
-function label(key, text, cls = "") {
-  let el = labels[key];
-  if (!el) { el = document.createElement("div"); el.className = "lbl " + cls; mapEl.appendChild(el); labels[key] = el; }
-  el.textContent = text; return el;
-}
-
-// views
-function fly(pos, tgt, ms = 900) {
-  const p0 = camera.position.clone(), t0 = controls.target.clone(), t = performance.now();
-  if (reduce) { camera.position.copy(pos); controls.target.copy(tgt); return; }
-  (function step() {
-    const u = Math.min(1, (performance.now() - t) / ms), e = u < .5 ? 2*u*u : 1 - (-2*u + 2)**2 / 2;
-    camera.position.lerpVectors(p0, pos, e); controls.target.lerpVectors(t0, tgt, e);
-    if (u < 1) requestAnimationFrame(step);
-  })();
-}
-const centre = () => new THREE.Vector3(0.3, yOf(hAt(LAT0, LON0)), 0.2);
-const overview = () => { const c = centre(); fly(new THREE.Vector3(c.x, c.y + 5.2, c.z + 9.0), c); };
-$("vOver").onclick = overview;
-$("vTop").onclick = () => { const c = centre(); fly(new THREE.Vector3(c.x, c.y + 13, c.z + 0.01), c); };
-$("vEvent").onclick = () => { if (lastEvent) focusEvent(lastEvent.p); };
-function focusEvent(p) { fly(new THREE.Vector3(p.x + 0.4, p.y + 1.1, p.z + 1.8), p.clone()); }
-
-// event type chips
-document.querySelectorAll(".chip").forEach(b => b.onclick = () => {
-  evType = b.dataset.ev; document.querySelectorAll(".chip").forEach(o => o.setAttribute("aria-pressed", o === b));
-});
-$("ve").oninput = e => {
-  VE = +e.target.value; $("veVal").textContent = VE; updateTerrainHeights(); buildFibre();
-  if (lastEvent) placeEventMarkers(lastEvent.k, lastEvent.type);
-};
-
-// tap detection
-let down = null; const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-renderer.domElement.addEventListener("pointerdown", e => { down = {x: e.clientX, y: e.clientY, t: performance.now()}; });
-renderer.domElement.addEventListener("pointerup", e => {
-  if (!down || !terrain) return;
-  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y), dt = performance.now() - down.t; down = null;
-  if (moved > 7 || dt > 600) return;
-  const r = renderer.domElement.getBoundingClientRect();
-  ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
-  ray.setFromCamera(ndc, camera);
-  const hit = ray.intersectObject(terrain)[0]; if (!hit) return;
-  let best = -1, bd = 1e9;
-  for (let k = 0; k < fpts.length; k++) { const d = (fpts[k].x - hit.point.x)**2 + (fpts[k].z - hit.point.z)**2; if (d < bd) { bd = d; best = k; } }
-  if (Math.sqrt(bd) > 0.5) { hint("Tap on or near the fence line (the glowing fibre)"); return; }
-  runEvent(best, evType);
-});
-let hintTimer;
-function hint(t) { const h = $("hint"); h.textContent = t; h.style.opacity = 1; clearTimeout(hintTimer); hintTimer = setTimeout(() => h.style.opacity = 0, 2600); }
-
-const ringMat = new THREE.MeshBasicMaterial({color: 0xff3b30, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false});
-function placeEventMarkers(k, type) {
-  if (eventGroup) scene.remove(eventGroup);
-  eventGroup = new THREE.Group(); scene.add(eventGroup);
-  const p = fibreVec(k, 0.008), n = fpts.length;
-  const seg = []; for (let d = -8; d <= 8; d++) seg.push(fibreVec((k + d + n) % n, 0.01));
-  for (const [core, glow, lod] of [[0.03, 0.09, "far"], [0.008, 0.026, "near"]]) {
-    const a = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(seg), 40, core, 6, false), new THREE.MeshBasicMaterial({color: 0xff2a1f}));
-    const b = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(seg), 40, glow, 8, false),
-      new THREE.MeshBasicMaterial({color: 0xff2a1f, transparent: true, opacity: 0.35, depthWrite: false, blending: THREE.AdditiveBlending}));
-    a.userData.lod = b.userData.lod = lod; eventGroup.add(a, b);
-  }
-  for (let i = 0; i < 2; i++) {
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.05, 0.058, 64), ringMat.clone());
-    ring.rotation.x = -Math.PI / 2; ring.position.copy(p); ring.userData.phase = i * 0.5; eventGroup.add(ring);
-  }
-  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.35, 8), new THREE.MeshBasicMaterial({color: 0xff3b30}));
-  beam.position.set(p.x, p.y + 0.175, p.z); eventGroup.add(beam);
-  // camera: nearest fixed camera on the inner side of the fence
-  const a = fpts[(k + 1) % n], b = fpts[(k - 1 + n) % n], t = new THREE.Vector3().subVectors(a, b).normalize();
-  const nrm = new THREE.Vector3(-t.z, 0, t.x);
-  const toC = new THREE.Vector3(-p.x, 0, -p.z).normalize(); if (nrm.dot(toC) < 0) nrm.negate();
-  const camPos = fpts[(k + 2) % n].clone().add(nrm.clone().multiplyScalar(0.03)); camPos.y += 0.05;
-  const cam = new THREE.Mesh(new THREE.ConeGeometry(0.022, 0.055, 4), new THREE.MeshBasicMaterial({color: 0x2f9e6a, transparent: true, opacity: 0}));
-  cam.position.copy(camPos); cam.lookAt(p); cam.rotateX(Math.PI / 2); cam.userData.cam = true; eventGroup.add(cam);
-  anchors.ev = new THREE.Vector3(p.x, p.y + 0.38, p.z); anchors.cam = camPos.clone().add(new THREE.Vector3(0, 0.08, 0));
-  return p;
-}
-
-// seeded random for the schematic waterfall and the AI stub
-function rng(seed) { let s = seed >>> 0 || 1; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
-
-function drawWaterfall(type, dkm, seed) {
-  const c = $("wf"), W = c.clientWidth, H = c.clientHeight, dpr = Math.min(devicePixelRatio, 2);
-  c.width = W * dpr; c.height = H * dpr; const g = c.getContext("2d"); g.scale(dpr, dpr);
-  const r = rng(seed), img = g.createImageData(W * dpr, H * dpr), win = 0.5, T = 10;   // ±250 m, 10 s
-  const amp = (x, t) => {
-    const d = (x - 0.5) * win * 1000; let a = 0;                                     // d in metres
-    if (type === "walking") { const ph = (t / 0.55) % 1; a = Math.exp(-(d*d) / (2*9*9)) * Math.exp(-ph / 0.08) * 1.0 * (t > 1.2 ? 1 : 0); }
-    if (type === "digging") { const ph = (t / 1.6) % 1; a = Math.exp(-(d*d) / (2*13*13)) * (Math.exp(-ph / 0.12) * 1.3 + 0.15) * (t > 0.8 ? 1 : 0); }
-    if (type === "vehicle") { const c0 = -110 + 22 * t; a = Math.exp(-((d - c0)**2) / (2*28*28)) * 0.75; }
-    return a;
-  };
-  const w = W * dpr, h = H * dpr;
-  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-    const v = Math.min(1, 0.12 * r() + amp(i / w, j / h * T) * (0.75 + 0.25 * r()));
-    const k = (j * w + i) * 4, cv = Math.pow(v, 0.8);
-    img.data[k] = 255 * Math.min(1, cv * 2.2 - 0.6 > 0 ? cv * 2.2 - 0.6 : 0) ; img.data[k+1] = 255 * Math.min(1, cv * 1.6); img.data[k+2] = 255 * Math.min(1, 0.25 + cv * 1.3); img.data[k+3] = 255;
-  }
-  g.putImageData(img, 0, 0); g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  g.fillStyle = "rgba(255,255,255,.85)"; g.font = "11px IBM Plex Sans, sans-serif";
-  g.fillText(`${(dkm - win/2).toFixed(2)} km`, 6, H - 6); const t2 = `${(dkm + win/2).toFixed(2)} km`; g.fillText(t2, W - g.measureText(t2).width - 6, H - 6);
-  g.fillText("time ↓ 10 s", 6, 14); g.strokeStyle = "rgba(255,80,60,.9)"; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(W/2, 20); g.lineTo(W/2, H - 18); g.stroke();
-}
-
-const timers = [];
-function runEvent(k, type, seedIn) {
-  timers.forEach(clearTimeout); timers.length = 0; const id = ++seq;
-  const zone = fib.zone[k], ch = fib.ch[k], dkm = fib.dkm[k];
-  const p = placeEventMarkers(k, type); lastEvent = {k, type, p}; $("vEvent").disabled = false;
-  focusEvent(p);
-  document.querySelectorAll("#steps li").forEach(li => li.classList.remove("on"));
-  $("outcome").className = "outcome"; $("outcome").textContent = "";
-  const bn = $("banner"); bn.className = "banner run"; bn.textContent = "Fibre: vibration detected…";
-  const r = rng(seedIn ?? (k * 7919 + id * 104729));
-  // AI stub: correct with probability Pc, else one of the other classes (as the capstone interface does in uniform mode)
-  const keys = Object.keys(EV); let pred = type;
-  if (r() > PC) { const others = keys.filter(x => x !== type); pred = others[Math.floor(r() * others.length)]; }
-  const threat = EV[pred].threat;
-  const gap = reduce ? 0 : 650;
-  const step = (i, fn) => timers.push(setTimeout(() => { fn(); document.querySelector(`#steps li[data-s="${i}"]`).classList.add("on"); }, gap * i));
-  step(1, () => { $("s1").innerHTML = `<span class="big">${dkm.toFixed(2)} km</span> from IU-1 along the fibre`; label("ev", `${EV[type].label} · ${dkm.toFixed(2)} km`, "ev"); });
-  step(2, () => { $("s2").innerHTML = `Channel ${ch} · <span class="tag" style="background:${ZCSS[zone]}">${ZN[zone]} zone</span><br>Localised within 4–6 m (simulated)`; });
-  step(3, () => drawWaterfall(type, dkm, k + id));
-  step(2, () => { bn.textContent = `Located: ch ${ch}, ${dkm.toFixed(2)} km, ${ZN[zone]} zone`; });
-  step(4, () => { bn.textContent = `AI: ${EV[pred].ai}`; });
-  step(4, () => { $("s4").innerHTML = `AI: <b>${EV[pred].ai}</b>${pred !== type ? ' <span class="tag" style="background:#6b7383">misclassified</span>' : ""}<br>Interface stub, Pc = 0.983 from literature · route: ${threat ? "threat → alarm" : "vehicle on fence road → log"}`; });
-  step(5, () => {
-    eventGroup.children.forEach(o => { if (o.userData.cam) o.material.opacity = 1; });
-    label("cam", "Camera ✓ linked", "");
-    $("s5").innerHTML = threat ? "Nearest fixed camera turned to the event; DAS track linked to camera track.<br>99.9 % correct links, 93 % linked (simulated, 20 m spacing)." : "No alarm, so no hand-off; event stored with its camera clip reference.";
-  });
-  timers.push(setTimeout(() => {
-    const o = $("outcome"); o.className = "outcome " + (threat ? "alarm" : "logged");
-    o.textContent = threat ? `ALARM · ${ZN[zone]} zone · ${dkm.toFixed(2)} km` : `LOGGED · ${dkm.toFixed(2)} km`;
-    addLog(type, pred, dkm, zone, threat);
-    bn.className = "banner " + (threat ? "alarm" : "logged"); bn.textContent = o.textContent;
-  }, gap * 6));
-}
-function addLog(type, pred, dkm, zone, threat) {
-  const L = $("log"); if (L.dataset.empty !== "0") { L.innerHTML = ""; L.dataset.empty = "0"; }
-  const li = document.createElement("li");
-  li.innerHTML = `<span>${EV[type].label} → AI ${pred} · ${dkm.toFixed(2)} km · ${ZN[zone]}</span><span style="color:${threat ? "var(--hot)" : "var(--mute)"}">${threat ? "ALARM" : "LOGGED"}</span>`;
-  L.prepend(li); while (L.children.length > 8) L.lastChild.remove();
-}
-$("preset").onclick = () => {
-  evType = "walking"; document.querySelectorAll(".chip").forEach(o => o.setAttribute("aria-pressed", o.dataset.ev === "walking"));
-  // poster scenario: intruder at 25.780142 N, 45.615659 E (channel 1, 6.5 km)
-  let best = 0, bd = 1e9; for (let k = 0; k < fib.lat.length; k++) { const d = (fib.lat[k] - 25.780142)**2 + (fib.lon[k] - 45.615659)**2; if (d < bd) { bd = d; best = k; } }
-  runEvent(best, "walking", 42);
-};
-
-// frame loop
-const v = new THREE.Vector3(), needle = $("needle");
-function place(key, anchor) {
-  const el = labels[key]; if (!el || !anchor) return;
-  v.copy(anchor).project(camera);
-  const vis = v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1;
-  el.style.display = vis ? "block" : "none";
-  el.style.left = ((v.x + 1) / 2 * mapEl.clientWidth) + "px"; el.style.top = ((1 - v.y) / 2 * mapEl.clientHeight) + "px";
-}
-function loop(t) {
-  controls.update();
-  if (chPts[0].length) for (const p of pulses) {
-    const arr = chPts[p.c]; if (!reduce) p.t = (p.t + 0.0009) % 1;
-    const f = p.t * (arr.length - 1), i = Math.floor(f); p.s.position.lerpVectors(arr[i], arr[Math.min(arr.length - 1, i + 1)], f - i); p.s.position.y += 0.01;
-  }
-  if (eventGroup) eventGroup.children.forEach(o => {
-    if (o.geometry && o.geometry.type === "RingGeometry") { const u = ((t / 1400) + o.userData.phase) % 1; o.scale.setScalar(0.6 + u * 2.4); o.material.opacity = 0.9 * (1 - u); }
-  });
-  for (const k of Object.keys(labels)) place(k, anchors[k]);
-  const near = camera.position.distanceTo(controls.target) < 3.2;
-  if (fibreGroup) fibreGroup.children.forEach(o => { if (o.userData.lod) o.visible = (o.userData.lod === "near") === near; });
-  if (eventGroup) eventGroup.children.forEach(o => { if (o.userData.lod) o.visible = (o.userData.lod === "near") === near; });
-  for (const p of pulses) { const sc = near ? 0.06 : 0.16; p.s.scale.set(sc, sc, 1); }
-  const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
-  needle.style.transform = `rotate(${Math.atan2(dir.x, -dir.z) * -180 / Math.PI}deg)`;
-  renderer.render(scene, camera); requestAnimationFrame(loop);
-}
-
-(async () => {
-  try {
-    const [d, f, base, plant] = await Promise.all([fetch("dem.json").then(r => r.json()), fetch("fibre.json").then(r => r.json()), img("base.jpg"), img("plant.jpg")]);
-    dem = d; fib = f; let zmin = 1e9; for (const z of dem.z) zmin = Math.min(zmin, z); dem.zmin = zmin / 10;
-    buildTerrain(base, plant); buildFibre(); buildPulses();
-    label("iu", "IU-1 · FEBUS A1-NEO · control room"); label("sub", "380 kV substation · Hot", "hot below");
-    $("legend").innerHTML = [3, 2, 1].map(z => `<div><i style="background:${ZCSS[z]}"></i>${ZN[z]} fence<em>${fib.zone_km[ZN[z]]} km</em></div>`).join("") +
-      `<div><i style="background:#fff;box-shadow:0 0 6px #bdf"></i>Light pulses from IU-1, 2 channels<em>${fib.L_km} km</em></div>`;
-    resize(); const c = centre(); camera.position.set(c.x, c.y + 5.2, c.z + 9.0); controls.target.copy(c);
-    $("loading").remove(); setTimeout(() => $("hint").style.opacity = 0, 6000);
-    requestAnimationFrame(loop);
-  } catch (err) { $("loading").textContent = "Could not load the Sudair data: " + err.message; }
-})();
-}
-</script>
+<script src="app.js"></script>
 </body>
 </html>
