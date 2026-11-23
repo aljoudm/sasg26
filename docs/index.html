@@ -44,7 +44,7 @@ header p{margin:0;color:var(--mute);font-size:14px}
 .rec{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b30;margin-right:6px;animation:blink 1s infinite}
 @keyframes blink{50%{opacity:.2}}
 .pipbox{position:absolute;border:2px solid #34c27a;border-radius:3px}
-.pipbox::after{content:"tracked · linked to DAS";position:absolute;left:-2px;top:100%;margin-top:2px;background:#34c27a;color:#06210f;font-size:10px;font-weight:700;padding:0 4px;white-space:nowrap}
+.piptag{position:absolute;left:-2px;top:100%;margin-top:2px;background:#34c27a;color:#06210f;font-size:10px;font-weight:700;padding:0 4px;white-space:nowrap}
 .lbl.cam{background:#34c27a;color:#06210f}
 .loading{position:absolute;inset:0;display:grid;place-items:center;color:#cfd8e3;font-size:15px;background:#0b1016}
 aside{background:var(--panel);border-left:1px solid var(--rule);overflow-y:auto;padding:16px 18px 24px}
@@ -94,7 +94,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-o
   <div class="hint" id="hint">Drag to rotate · pinch or scroll to zoom · two fingers to pan · tap the fence</div>
   <div class="compass" title="North"><svg viewBox="-17 -17 34 34" id="needle"><path d="M0-15 5 0 0-3-5 0Z" fill="#E3B02B"/><path d="M0 15 5 0 0 3-5 0Z" fill="#8d9aab"/><text y="11" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">N</text></svg></div>
   <div class="banner" id="banner"></div>
-  <div class="pip" id="pip" aria-label="Live view of the turned camera (simulated)"><div class="pipbox" id="pipbox"></div><div class="piplbl"><span class="rec"></span>Nearest camera · live (simulated)</div></div>
+  <div class="pip" id="pip" aria-label="Live view of the turned camera (simulated)"><div class="pipbox" id="pipbox"><span class="piptag" id="piptag">tracked · linked to DAS</span></div><div class="piplbl"><span class="rec"></span>Nearest camera · live (simulated)</div></div>
   <div class="mapbtns"><button id="vOver">Overview</button><button id="vTop">Top view</button><button id="vEvent" disabled>Go to event</button></div>
   <label class="ve">Vertical ×<b id="veVal">4</b><input id="ve" type="range" min="1" max="10" step="1" value="4" aria-label="Vertical exaggeration, display only"><small>display only</small></label>
  </div>

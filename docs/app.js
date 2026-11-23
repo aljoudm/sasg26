@@ -313,7 +313,7 @@ function drawWaterfall(type, dkm, seed) {
     const d = (x - 0.5) * win * 1000;
     if (type === "walking") { const ph = (t / 0.55) % 1; return Math.exp(-(d*d) / 162) * Math.exp(-ph / 0.08) * (t > 1.2 ? 1 : 0); }
     if (type === "digging") { const ph = (t / 1.6) % 1; return Math.exp(-(d*d) / 338) * (Math.exp(-ph / 0.12) * 1.3 + 0.15) * (t > 0.8 ? 1 : 0); }
-    const c0 = -110 + 22 * t; return Math.exp(-((d - c0)**2) / 1568) * 0.75;
+    const c0 = t < 5 ? -110 + 22 * t : 0; return Math.exp(-((d - c0)**2) / 1568) * (t < 5 ? 0.75 : 0.35);   // drives in, stops, idles
   };
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
     const v = Math.min(1, 0.12 * r() + amp(i / w, j / h * T) * (0.75 + 0.25 * r())), k = (j * w + i) * 4, cv = Math.pow(v, 0.8);
@@ -347,7 +347,7 @@ function start(k, type, seedIn) {
   const cp = camPoles[(k + 1) % camPoles.length], camHead = new THREE.Vector3(cp.x, cp.y + 4.1 * M, cp.z);
   if (type === "vehicle") {
     actor = makeCar();
-    act = {type, k, pred, from: -70, to: 70, dur: 12, off: 22, t, o, p, camHead, t0: performance.now(), stage: 0};
+    act = {type, k, pred, from: -75, to: 0, dur: 9, off: 9, t, o, p, camHead, t0: performance.now(), stage: 0};
     act.chIdx = chIdx;
   } else {
     actor = makePerson(type === "digging");
@@ -371,8 +371,9 @@ function detected() {
   step(3, () => drawWaterfall(type, dkm, act.k + seq));
   step(4, () => { $("s4").innerHTML = `AI: <b>${EV[pred].ai}</b>${pred !== type ? ' <span class="tag" style="background:#6b7383">misclassified</span>' : ""}<br>Interface stub, Pc = 0.983 from literature · route: ${threat ? "threat → alarm" : "vehicle on fence road → log"}`; bn("run", `AI: ${EV[pred].ai}`); });
   step(5, () => {
-    if (threat) { act.track = true; $("pip").classList.add("on"); camGlow.position.copy(act.camHead); camGlow.visible = true; }
-    $("s5").innerHTML = threat ? "Nearest fixed camera turns to the event and follows it; DAS track linked to the camera track.<br>99.9 % correct links, 93 % linked (simulated, 20 m spacing)." : "No alarm, so no hand-off; the event is stored with its camera clip reference.";
+    act.track = true; $("pip").classList.add("on"); camGlow.position.copy(act.camHead); camGlow.visible = true;
+    $("piptag").textContent = threat ? "tracked · linked to DAS" : "vehicle · clip saved";
+    $("s5").innerHTML = threat ? "Nearest fixed camera turns to the event and follows it; DAS track linked to the camera track.<br>99.9 % correct links, 93 % linked (simulated, 20 m spacing)." : "Nearest camera turns and records the vehicle; no alarm, the event is logged with its camera clip.";
   });
   timers.push(setTimeout(() => {
     const o = $("outcome"); o.className = "outcome " + (threat ? "alarm" : "logged");
@@ -421,12 +422,13 @@ function animateActor(now) {
       if (act.stage === 0 && T > walkT + 1.2) { act.stage = 1; detected(); }
     }
   } else {
-    const s = Math.min(act.to, act.from + (act.to - act.from) * (T / act.dur));
+    // drive in, slow down and stop at the event point (ease-out), engine idling
+    const u2 = Math.min(1, T / act.dur), s = act.from + (act.to - act.from) * (1 - (1 - u2) ** 2), moving = u2 < 1;
     const x = p.x + o.x * act.off * M + t.x * s * M, z = p.z + o.z * act.off * M + t.z * s * M;
     actor.position.set(x, groundY(x, z), z); actor.rotation.y = Math.atan2(t.x, t.z);
-    u.wheels.forEach(w => w.rotation.x += 0.25);
-    if (Math.random() < 0.3 && s < act.to) { tmpV.set(0, 0.3 * M, -2.6 * M).applyAxisAngle(up, actor.rotation.y).add(actor.position); puff(tmpV); }
-    if (act.stage === 0 && s > -8) { act.stage = 1; detected(); }
+    if (moving) u.wheels.forEach(w => w.rotation.x += 0.3 * (1 - u2) + 0.02);
+    if (moving && Math.random() < 0.3 * (1 - u2) + 0.05) { tmpV.set(0, 0.3 * M, -2.6 * M).applyAxisAngle(up, actor.rotation.y).add(actor.position); puff(tmpV); }
+    if (act.stage === 0 && u2 > 0.75) { act.stage = 1; detected(); }
   }
 }
 
@@ -486,7 +488,7 @@ function loop(now) {
     renderer.render(scene, pipCam); renderer.setScissorTest(false); actor.visible = vis;
     // tracking box around the person in the camera view
     const top = actor.position.clone().add(new THREE.Vector3(0, 1.85 * M, 0)).project(pipCam), bot = actor.position.clone().project(pipCam);
-    const bh = (top.y - bot.y) / 2 * r.height, bw = bh * 0.55, cx = (bot.x + 1) / 2 * r.width, cy = (1 - top.y) / 2 * r.height;
+    const bh = (top.y - bot.y) / 2 * r.height, bw = bh * (act.type === "vehicle" ? 2.4 : 0.55), cx = (bot.x + 1) / 2 * r.width, cy = (1 - top.y) / 2 * r.height;
     pipBox.style.cssText = `left:${cx - bw / 2}px;top:${cy}px;width:${bw}px;height:${bh}px`;
   }
   requestAnimationFrame(loop);
