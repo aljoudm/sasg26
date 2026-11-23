@@ -1,0 +1,37 @@
+
+	Trial License -- for use to evaluate programs for possible purchase as an end-user only.
+
+Sudair channel L = 16282 m, PRF 5643 Hz, Npulses 11286, Nz 8141
+fiber_model: 81410 scatterers on 32564 fine cells (0.50 m each)
+fiber_model: expected backscatter at start = 61.8 nW (-42.1 dBm)
+
+event                          z0 [m]  w [m]    peak dL   peak phi
+Sine 100 Hz (calibration)        3256     10    30.0 nm   0.279 rad
+Walking                          6513      5    51.6 nm   0.479 rad
+Digging                          9769      3    79.5 nm   0.738 rad
+Vehicle                         13026     30   100.0 nm   0.928 rad
+
+simulate_waterfall: 11286 pulses x 8141 samples
+   10%  (1.2 s)
+   20%  (2.4 s)
+   30%  (3.5 s)
+   40%  (4.6 s)
+   50%  (5.7 s)
+   60%  (6.7 s)
+   70%  (7.8 s)
+   80%  (8.9 s)
+   90%  (10.0 s)
+simulate_waterfall: done in 11.1 s
+detector: coherent, SNR = 35 dB at start, noise = 0.020 nW
+process_das: gauge = 20 m (10 samples), window = 5 samples
+process_das: max measurable |dL| = 338 nm
+process_das: background activity ~ 1.83 nm rms
+               name                  z0      z_est    pos_err_m    amp_ratio     corr      detected
+    ___________________________    ______    _____    _________    _________    _______    ________
+
+    "Sine 100 Hz (calibration)"    3256.4     3258       1.6        0.99315     0.99876     true   
+    "Walking"                      6512.8     6518       5.2         1.0364     0.97182     true   
+    "Digging"                      9769.2     9774       4.8         1.0152     0.98184     true   
+    "Vehicle"                       13026    13030       4.4        0.72339     0.99255     true   
+
+threshold 7.21 nm (median 1.83)

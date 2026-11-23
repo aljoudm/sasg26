@@ -31,3 +31,13 @@
 | Channel fibre incl. lead-in | 16.282 and 16.282 (R_DAS 20 km, margin 3.718) | km | `results/placement_channels.csv` | `test_stageD` |
 | Fibre total incl. lead-ins | 32.564 (boundary 32.304) | km | `results/placement.mat` | same |
 | Sensing points (fibre / 2 m) | 16152 | - | same | same |
+
+## Stage F: DAS engine on the Sudair channel, "simulated, FEBUS A1-NEO parameters" (`tests/test_stageF.m`, `src/das/run_das_sudair.m`)
+Engine DAS-Simulation 3a8862b unchanged; fibre = longest Sudair channel 16,282 m [DERIVED]; PRF 5.65 kHz, 11,286 pulses, 8,141 samples; gauge 20 m, resolution 10 m (`das_params.m`).
+| Event | Position error (m) | Amplitude ratio | Correlation | Detected (threshold 7.21 nm) |
+| --- | --- | --- | --- | --- |
+| Calibration sine 100 Hz | 1.6 | 0.993 | 0.999 | yes |
+| Walking | 5.2 | 1.036 | 0.972 | yes |
+| Digging | 4.8 | 1.015 | 0.982 | yes |
+| Vehicle | 4.4 | 0.723 | 0.993 | yes |
+Files: `results/das_recovered_events.csv`, `results/das_sudair.mat`, `poster_figs/das_waterfall.png|pdf`, `poster_figs/das_recovered_events.png|pdf`. Fence climbing: no engine model, listed as future work. Resolution study and Monte Carlo not run.
