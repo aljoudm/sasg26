@@ -20,3 +20,8 @@ VERT_EXAG	Vertical exaggeration (display only)	DAS-map twin	2	-	[ASSUMED: DAS-ma
 aoiMargin	AOI margin around plant bbox (terrain/base texture)	Context	0.05	deg	[ASSUMED: DAS-map value]	team	provisional		assumed
 detailMargin	Margin for plant-detail texture	Context	0.012	deg	[ASSUMED: framing]	team	provisional		assumed
 A_zone_sum	Zone lengths Hot/Neutral/Cold	Sum equals L_boundary	4.523/6.949/20.834	km	[COMPUTED-MAP]	team	approved	sum 32.306 vs 32.304 (local-frame constant); test tolerance 5 m	computed
+building	Interrogator building location	Control room / substation building (T_op 5-40 degC)	centroid of OSM way 1317477365	-	[ASSUMED: control room inside the substation compound; no separate location in OSM]	team	provisional		assumed
+leadin_m	Lead-in building -> fence entry (straight run, no slack)	Counted in every channel	130	m	[COMPUTED-MAP]	team	approved		computed
+N_IU	Interrogators	Rule: channel fibre <= R_DAS with lead-in	1	-	[DERIVED]	team	approved	2 spare channels	derived
+chNeed	Channel fibre incl. lead-in	<= R_DAS 20 km	16.282/16.282	km	[DERIVED]	team	approved		derived
+N_sensing	Sensing points	boundary fibre / 2 m	16152	-	[DERIVED]	team	approved		derived
