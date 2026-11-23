@@ -11,6 +11,9 @@ F = load(fullfile(c.resDir, 'placement.mat')).F;
 L = round(F.longestChannelKm * 1e3);                                  % m  [DERIVED: longest Sudair channel]
 P = params(struct('L', L));
 fprintf('Sudair channel L = %d m, PRF %.0f Hz, Npulses %d, Nz %d\n', L, P.PRF, P.Npulses, P.Nz);
+% event positions: engine defaults, except Walking / Vehicle placed at the map scenario (src/placement/scenario_sudair.m)
+Sc = scenario_sudair();  def = [0.2 0.4 0.6 0.8] * P.L;  def(2) = Sc.events_z.walk;  def(4) = min(Sc.events_z.vehicle, P.L - 20);
+P.ev_z = def;
 Fm = fiber_model(P);  ev = define_events(P);
 W = simulate_waterfall(P, Fm, ev);
 Dt = detector(P, W, 'coherent');  clear W

@@ -34,10 +34,11 @@
 
 ## Stage F: DAS engine on the Sudair channel, "simulated, FEBUS A1-NEO parameters" (`tests/test_stageF.m`, `src/das/run_das_sudair.m`)
 Engine DAS-Simulation 3a8862b unchanged; fibre = longest Sudair channel 16,282 m [DERIVED]; PRF 5.65 kHz, 11,286 pulses, 8,141 samples; gauge 20 m, resolution 10 m (`das_params.m`).
-| Event | Position error (m) | Amplitude ratio | Correlation | Detected (threshold 7.21 nm) |
+| Event (channel position) | Position error (m) | Amplitude ratio | Correlation | Detected (threshold 7.23 nm) |
 | --- | --- | --- | --- | --- |
-| Calibration sine 100 Hz | 1.6 | 0.993 | 0.999 | yes |
-| Walking | 5.2 | 1.036 | 0.972 | yes |
-| Digging | 4.8 | 1.015 | 0.982 | yes |
-| Vehicle | 4.4 | 0.723 | 0.993 | yes |
+| Calibration sine 100 Hz (3,256 m) | 1.6 | 0.993 | 0.999 | yes |
+| Walking = map intruder (6,507 m) | 0.5 | 1.058 | 0.982 | yes |
+| Digging (9,769 m) | 4.8 | 1.016 | 0.982 | yes |
+| Vehicle = map vehicle on access road (5,707 m) | 3.1 | 0.640 | 0.996 | yes |
+Walking and Vehicle positions are set to the map scenario (`src/placement/scenario_sudair.m`); the other two keep the engine defaults.
 Files: `results/das_recovered_events.csv`, `results/das_sudair.mat`, `poster_figs/das_waterfall.png|pdf`, `poster_figs/das_recovered_events.png|pdf`. Fence climbing: no engine model, listed as future work. Resolution study and Monte Carlo not run.
