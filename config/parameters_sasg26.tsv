@@ -25,3 +25,7 @@ leadin_m	Lead-in building -> fence entry (straight run, no slack)	Counted in eve
 N_IU	Interrogators	Rule: channel fibre <= R_DAS with lead-in	1	-	[DERIVED]	team	approved	2 spare channels	derived
 chNeed	Channel fibre incl. lead-in	<= R_DAS 20 km	16.282/16.282	km	[DERIVED]	team	approved		derived
 N_sensing	Sensing points	boundary fibre / 2 m	16152	-	[DERIVED]	team	approved		derived
+camera_dist	3D twin camera distance	DAS-map main view az180 el30 fov30 perspective	10.729	map units (km)	[DERIVED: same framing as DAS-map main view] 53 x (10.73 km / 46.66 km) = 12.19, then x0.88 framing adjustment (only dist changed)	team	provisional		derived
+cam_scale	Framing adjustment on dist	Plant filled too little at 1.00	0.88	-	[ASSUMED: visual framing]	team	provisional		assumed
+lift	Fibre display lift above terrain	Display only	0.012	km	[ASSUMED: display]	team	provisional		assumed
+veh_dfence	Vehicle distance from fence (service road, OSM)	Illustrative non-threat position	45	m	[ASSUMED: ILLUSTRATIVE position; road geometry COMPUTED-MAP]	team	provisional		assumed
