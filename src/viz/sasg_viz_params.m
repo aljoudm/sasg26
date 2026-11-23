@@ -9,8 +9,10 @@ vp.imgMperPx = 2.0;        % hi-res plant imagery [m/px]
 vp.contour_m = 10;         % contour interval [m]
 vp.contour_label = 3;      % number of labelled contours
 vp.plant_blur_px = 0.8;    % light blur of the 2 m/px plant imagery to limit moire from panel rows [px]
-vp.band_km = 0.16;         % zone band width beside the fibre [km, display]
+vp.band_km = 0.05;  vp.band_alpha = 0.35;   % zone band: +-50 m each side of the fibre
+vp.feather_m = 75;   % feather of the hi-res plant texture over the base texture
+vp.risk_alpha_max = 0.25;   % risk glow outside the fence only         % zone band width beside the fibre [km, display]
 vp.risk_corridor_km = 0.5; % risk glow corridor around the fibre [km, display]
-vp.pulseLenKm = 0.9;  vp.pulseSpacingKm = 4;  vp.pulsePhase = 0.45;   % light pulses scaled from DAS-map (4.5 / 15 km)
-vp.fibreLift = 0.03;  vp.glowDilate_m = 300;   % lift above the terrain [km, display]; display widening of the energy peak [m]
+vp.pulseLenKm = 0.2;  vp.pulseSpacingKm = 3;  vp.pulsePhase = 0.45;   % light pulses scaled from DAS-map (4.5 / 15 km)
+vp.fibreLift = 0.006;  vp.glowDilate_m = 300;   % lift above the terrain [km, display]; display widening of the energy peak [m]
 end

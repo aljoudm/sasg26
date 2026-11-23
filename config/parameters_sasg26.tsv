@@ -46,3 +46,9 @@ risk_corridor	Risk glow corridor / threshold	Zones' own slope+road risk, shown w
 glowDilate	Display widening of the energy peak along the fibre	Local peaks are ~20 m wide; widened so the red glow is visible	300	m	[ASSUMED: display only]	team	provisional		assumed
 pulses	Light pulse length / spacing (DAS-map 4.5 / 15 km)	Scaled to a 16 km channel	0.9 / 4	km	[ASSUMED: display only]	team	provisional		assumed
 dist_final	3D twin camera distance, final	az180 el30 fov30 perspective, target = fibre bbox centre	11.802	map units (km)	[DERIVED: same framing as DAS-map main view] 53 x 10.73/46.66 x 0.88 x 1.10	team	provisional	x1.10 added in the restyle for room around the new elements	derived
+band_km	Zone band half-width / alpha (fix round; supersedes 0.16 km / 0.55)	Imagery stays visible	0.05 / 0.35	km / -	[ASSUMED: display only]	team	provisional		assumed
+risk_alpha	Risk glow: outside the fence only, smoothed, alpha max	No risk cells inside the fence	0.25	-	[ASSUMED: display only]	team	provisional		assumed
+feather_m	Feather of the hi-res plant texture over the base texture	No hard rectangular edge	75	m	[ASSUMED: display only]	team	provisional		assumed
+pulse	Light pulse: segment length / spacing / lift (fix round)	Short segments on the fibre	0.2 / 3 / 0.003	km / km / km display	[ASSUMED: display only]	team	provisional		assumed
+drape_lift	Lift of fibre / bands above the drawn DEM surface (display km, = 1.5 m real at x4)	Draped, only avoids z-fighting	0.006	km	[ASSUMED: display only]	team	provisional	limit was 3 m x VERT_EXAG = 0.012	assumed
+ring_r	Intruder rings / heat patch outer radius	Ground marker, 2 rings max	0.15, 0.30 / 0.30	km	[ASSUMED: display only]	team	provisional		assumed

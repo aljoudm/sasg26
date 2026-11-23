@@ -21,7 +21,7 @@ if ~isfile(hr) || force
     for r = 1:ny
         cols = cell(1, nx);
         for q = 1:nx
-            px = round((lons(q + 1) - lons(q)) * kx / vp.imgMperPx);  py = round((lats(r) - lats(r + 1)) * ky / vp.imgMperPx);
+            px = round((lons(q + 1) - lons(q)) * kx / vp.imgMperPx);  py = round(px * (lats(r) - lats(r + 1)) / (lons(q + 1) - lons(q)));   % square pixels in DEGREES (the export's rule); a metric aspect makes Esri stretch the extent
             url = sprintf(['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=%.7f,%.7f,%.7f,%.7f&bboxSR=4326&imageSR=4326&size=%d,%d&format=jpg&f=image'], lons(q), lats(r + 1), lons(q + 1), lats(r), px, py);
             tmp = [tempname '.jpg'];
             for a = 1:4, try, websave(tmp, url, weboptions('Timeout', 180, 'UserAgent', c.UA)); break; catch err, pause(5); if a == 4, rethrow(err); end, end, end

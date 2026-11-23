@@ -7,12 +7,15 @@ cfg.pulseLenKm = vp.pulseLenKm;  cfg.pulseSpacingKm = vp.pulseSpacingKm;  cfg.pu
 cfg.col.riskLo = [1.00 0.75 0.15];  cfg.col.riskHi = [0.85 0.10 0.60];  cfg.col.c2 = [1 0.8 0.2];  cfg.col.entry = [1 1 1];  cfg.col.uav = [1 1 1];  cfg.col.patrol = [1 1 1];
 tcfg = make_shaded_textures();  tcfg.imageryCredit = cfg.imageryCredit;
 T = load_terrain(tcfg);
+% heights ON the drawn surface: interpolate the same meshes that draw_terrain_sudair draws (detail mesh incl. its +0.004 lift, base mesh elsewhere)
+mb = T.base;  md = T.mashaer;
+Gd = griddedInterpolant({md.Y(:, 1), md.X(1, :)}, md.Z, 'linear', 'none');  Gb = griddedInterpolant({mb.Y(:, 1), mb.X(1, :)}, mb.Z, 'linear', 'nearest');
+T.heightXY = @(x, y) surfaceHeight(Gd, Gb, x, y);
 F0 = load(fullfile(c.resDir, 'placement.mat')).F;  Sc = load(fullfile(c.resDir, 'scenario.mat')).Sc;
 Zs = load(fullfile(c.zonesDir, 'zones.mat'));  S = run_das_sudair();
 n = F0.n;  X = T.toX(F0.lon);  Y = T.toY(F0.lat);
-% fibre height: lifted above a ridge-dilated copy of the display mesh (DAS-map build_scene.m rule)
-Zd = imdilate(T.base.Z, strel('disk', 2));  G = griddedInterpolant({T.base.Y(:, 1), T.base.X(1, :)}, Zd, 'linear', 'nearest');
-Zf = max(movmean(G(Y, X), 15), T.heightXY(X, Y)) + cfg.fibreLift;
+% fibre draped on the drawn surface (small lift only, no ridge dilation)
+Zf = T.heightXY(X, Y) + cfg.fibreLift;
 % zone per fibre point (nearest zone boundary piece)
 kzx = Zs.G.kx / 1e3;  kzy = Zs.G.ky / 1e3;  Zz = Zs.Z;
 fxz = (F0.lon - Zs.G.lon0) * kzx;  fyz = (F0.lat - Zs.G.lat0) * kzy;
@@ -48,9 +51,11 @@ F.nSeg = 2;  F.segNearIdx = [F0.entryIdx; F0.entryIdx];  F.segFarIdx = far;  F.s
 S0 = load(tcfg.demMat);  latD = S0.lat(:);  lonD = S0.lon(:)';  risk = Zs.G.risk;  [nr, nc] = size(risk);
 bw = false(nr, nc);  ii = min(max(round((latD(1) - F0.lat) / abs(latD(2) - latD(1))) + 1, 1), nr);  jj = min(max(round((F0.lon - lonD(1)) / abs(lonD(2) - lonD(1))) + 1, 1), nc);
 bw(sub2ind([nr nc], ii, jj)) = true;  dpx = bwdist(bw) * Zs.G.pxM / 1e3;
-fade = max(1 - dpx / vp.risk_corridor_km, 0);  inC = fade > 0;
+fade = max(1 - dpx / vp.risk_corridor_km, 0);
+[LOd, LAd] = meshgrid(lonD, latD);  insideFence = inpolygon(LOd, LAd, F0.lon([1:n 1]), F0.lat([1:n 1]));  fade(insideFence) = 0;   % no risk cells inside the fence
+inC = fade > 0;
 cfg.riskShowFrom = prctile(risk(inC), 10);
-alpha = 0.75 * min(max((risk - cfg.riskShowFrom) / 0.35, 0), 1) .* fade;
+alpha = vp.risk_alpha_max * min(max((risk - cfg.riskShowFrom) / 0.35, 0), 1) .* fade;  alpha = imgaussfilt(alpha, 2);   % smooth, <= 0.25
 R.at = griddedInterpolant({flip(latD), lonD(:)}, flipud(risk), 'linear', 'nearest');
 R.alphaAt = griddedInterpolant({flip(latD), lonD(:)}, flipud(alpha), 'linear', 'nearest');
 % events (intruder = engine Walking, vehicle = engine Vehicle)
@@ -58,7 +63,7 @@ it = Sc.intr;  ix = X(it.idx);  iy = Y(it.idx);  iz = T.heightXY(ix, iy);  o = i
 Rr = load(fullfile(c.dataDir, 'roads_osm.mat')).roads;  rd = Rr(Sc.veh.road_k);  rx = T.toX(rd.lon);  ry = T.toY(rd.lat);
 vx = T.toX(Sc.veh.lon);  vy = T.toY(Sc.veh.lat);
 tl = 0.80;  tx = ix + o(1) * linspace(tl, -0.35, 30)';  ty = iy + o(2) * linspace(tl, -0.35, 30)';
-E.cross = [ix iy iz];  E.intruder = [tx(1) ty(1) T.heightXY(tx(1), ty(1))];  E.trackX = tx;  E.trackY = ty;  E.trackZ = T.heightXY(tx, ty) + 0.016;
+E.cross = [ix iy iz];  E.intruder = [tx(1) ty(1) T.heightXY(tx(1), ty(1))];  E.trackX = tx;  E.trackY = ty;  E.trackZ = T.heightXY(tx, ty) + 0.008;
 E.vehicle = [vx vy T.heightXY(vx, vy)];  E.roadLines = {[rx ry T.heightXY(rx, ry) + 0.01]};  E.secLen = S.z(end) / 1e3;
 sim.z = S.z;  sim.a = S.act;  sim.thr = S.thr;  sim.median = S.median;
 sim.events = struct('name', {}, 'type', {}, 'z0', {}, 'peak_nm', {});
@@ -70,4 +75,9 @@ Ssub = load(fullfile(c.dataDir, 'substations.mat')).S;  sub = Ssub([Ssub.id] == 
 sc.S = S;  sc.refPk = ref;
 sc.nFalse = nFalse;
 fprintf('twin scene: thresholdNorm %.2f, fibre points above threshold away from the two events: %d\n', sc.thresholdNorm, sc.nFalse);
+end
+
+function v = surfaceHeight(Gd, Gb, x, y)
+v = Gd(y, x);  w = isnan(v);
+if any(w(:)), v(w) = Gb(y(w), x(w)); end
 end

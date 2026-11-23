@@ -1,5 +1,5 @@
 function h = draw_fibre_sudair(ax, scene, lw)
-% DRAW_FIBRE_SUDAIR  ADAPTED COPY of DAS-map draw_fibre.m (third_party/dasmap, a25fd0c): only the dashed 10 km "simulated section"
+% DRAW_FIBRE_SUDAIR  ADAPTED COPY (also: light pulses are short bright segments on the fibre instead of the Makkah-scale wide patches) of DAS-map draw_fibre.m (third_party/dasmap, a25fd0c): only the dashed 10 km "simulated section"
 % corridor block is removed (it marks the Makkah trace stretch and would span half the plant). Everything else is unchanged.
 % DRAW_FIBRE  3D glowing fibre following the terrain, coloured by vibration energy,
 % with light pulses travelling outward from each interrogator (one frame of the animation).
@@ -41,16 +41,12 @@ end
 end
 
 function drawPulse(ax, F, sHead, dirn, cfg, lw)
+% Short bright segment ON the fibre (display only): soft cyan glow + white core, no wider than the fibre glow.
 c = cfg.col;  L = F.L_km;  s = F.s_km(:);
-nSeg = 10;  len = cfg.pulseLenKm / nSeg;
-for q = 1:nSeg
-    a = mod(sHead - dirn * (q - 1) * len, L);  b = mod(sHead - dirn * q * len, L);
-    idx = ringIdx(s, L, a, b);
-    if numel(idx) < 2, continue; end
-    f = 1 - (q - 1) / nSeg;
-    plot3(ax, F.x(idx), F.y(idx), F.z(idx) + 0.012, '-', 'Color', [c.cyan 0.60 * f], 'LineWidth', (15 * f + 3) * lw);
-    plot3(ax, F.x(idx), F.y(idx), F.z(idx) + 0.016, '-', 'Color', [1 1 1 1.0 * f], 'LineWidth', (6 * f + 1.2) * lw);
-end
+idx = ringIdx(s, L, sHead, mod(sHead - dirn * cfg.pulseLenKm, L));
+if numel(idx) < 2, return; end
+plot3(ax, F.x(idx), F.y(idx), F.z(idx) + 0.003, '-', 'Color', [c.cyan 0.45], 'LineWidth', 3.4 * lw);
+plot3(ax, F.x(idx), F.y(idx), F.z(idx) + 0.005, '-', 'Color', [1 1 1 0.85], 'LineWidth', 2.4 * lw);
 end
 
 function idx = ringIdx(s, L, a, b)

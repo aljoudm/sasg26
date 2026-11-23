@@ -23,7 +23,7 @@ hw = 170;  hh = 128;                                                      % half
 imgFile = fullfile(c.dataDir, 'dem', 'tex_intruder.jpg');
 if ~isfile(imgFile)
     la = lat0 + [-452 452] / ky;  lo = lon0 + [-600 600] / kx;     % Esri refuses very small extents: fetch 1.2 km, show the central window
-    url = sprintf(['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=%.7f,%.7f,%.7f,%.7f&bboxSR=4326&imageSR=4326&size=1024,771&format=jpg&f=image'], lo(1), la(1), lo(2), la(2));
+    url = sprintf(['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?bbox=%.7f,%.7f,%.7f,%.7f&bboxSR=4326&imageSR=4326&size=1024,%d&format=jpg&f=image'], lo(1), la(1), lo(2), la(2), round(1024 * diff(la) / diff(lo)));
     websave(imgFile, url, weboptions('Timeout', 120, 'UserAgent', c.UA));
 end
 img = imread(imgFile);
