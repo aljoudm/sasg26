@@ -1,0 +1,12 @@
+{
+  "intr": "Intruder: detected → AI: human (walking) (0.79) → ALARM",
+  "veh": "Vehicle on access road → AI: vehicle (0.61) → logged",
+  "step3": "3  AI: human (walking)",
+  "intr_route": "ALARM",
+  "veh_route": "LOGGED",
+  "intr_class": "human (walking)",
+  "veh_class": "vehicle",
+  "intr_conf": 0.79,
+  "veh_conf": 0.61,
+  "status": "AI: full-das interface (stub, Pc 0.983)"
+}

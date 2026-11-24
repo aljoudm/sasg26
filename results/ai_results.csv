@@ -1,0 +1,13 @@
+run,event,true_class,predicted_class,confidence,route
+Pc_0.983,Sine 100 Hz (calibration),no_event,no_event,0.85,"excluded (calibration, not in the alarm logic)"
+Pc_0.983,Walking = map intruder,walking,walking,0.79,"ALARM -> camera verification"
+Pc_0.983,Digging,digging,digging,0.97,"ALARM -> camera verification"
+Pc_0.983,Vehicle = map vehicle (access road),vehicle,vehicle,0.61,"logged (vehicle on the access road)"
+Pc_0.993,Sine 100 Hz (calibration),no_event,no_event,0.85,"excluded (calibration, not in the alarm logic)"
+Pc_0.993,Walking = map intruder,walking,walking,0.79,"ALARM -> camera verification"
+Pc_0.993,Digging,digging,digging,0.97,"ALARM -> camera verification"
+Pc_0.993,Vehicle = map vehicle (access road),vehicle,vehicle,0.61,"logged (vehicle on the access road)"
+Brno_sensitivity,Sine 100 Hz (calibration),no_event,no_event,0.97,"excluded (calibration, not in the alarm logic)"
+Brno_sensitivity,Walking = map intruder,walking,digging,0.79,"ALARM -> camera verification"
+Brno_sensitivity,Digging,digging,digging,0.78,"ALARM -> camera verification"
+Brno_sensitivity,Vehicle = map vehicle (access road),vehicle,other,0.63,"no alarm (non-threat class)"
