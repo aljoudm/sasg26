@@ -44,7 +44,7 @@ plot(ax, S.z / 1e3, S.act, '-', 'Color', [0 0.5 0.68], 'LineWidth', 0.8);  yline
 text(ax, 0.1, S.thr, ' threshold', 'Color', [0.8 0.1 0.1], 'VerticalAlignment', 'bottom', 'FontSize', 15);
 for i = 1:numel(S.tab)
     plot(ax, S.tab(i).z_est / 1e3, S.tab(i).peak_nm, 'o', 'MarkerSize', 8, 'MarkerFaceColor', [0.85 0.4 0.1], 'MarkerEdgeColor', 'none');
-    text(ax, S.tab(i).z_est / 1e3, S.tab(i).peak_nm * 1.1, sprintf(' %s: %.1f m ', lab(S.tab(i).type), S.tab(i).pos_err_m), 'HorizontalAlignment', ha{1 + mod(sum([S.tab.z0] < S.tab(i).z0), 2)}, 'VerticalAlignment', 'bottom', 'FontSize', 17, 'FontWeight', 'bold');
+    text(ax, S.tab(i).z_est / 1e3, S.tab(i).peak_nm * 1.1, sprintf(' %s: %.1f m ', lab(S.tab(i).type), S.tab(i).pos_err_m), 'HorizontalAlignment', ha{1 + any([S.tab.z0] > S.tab(i).z0 & [S.tab.z0] - S.tab(i).z0 < 1500)}, 'VerticalAlignment', 'bottom', 'FontSize', 17, 'FontWeight', 'bold');
 end
 xlabel(ax, 'Distance along the Sudair channel (km)', 'FontSize', 16);  ylabel(ax, 'Activity (nm rms)', 'FontSize', 16);
 xlim(ax, [0 S.z(end) / 1e3]);  ylim(ax, [0 max(S.act) * 1.45]);
