@@ -33,7 +33,7 @@ for i = 1:4
     plot(a, S.t(m), S.TS{i}(1, m) * 1e9, '-', 'Color', [0.6 0.6 0.6], 'LineWidth', 1.4);
     plot(a, S.t(m), S.TS{i}(2, m) * 1e9, '-', 'Color', [0.8 0.1 0.1], 'LineWidth', 0.7);
     xlabel(a, 'Time (s)');  if i == 1, ylabel(a, 'Elongation (nm)'); legend(a, {'true', 'recovered'}, 'Location', 'northoutside', 'Orientation', 'horizontal', 'FontSize', 11); end
-    text(a, 0.02, 0.96, sprintf('%s\nr = %.3f, amp. ratio %.2f', lab(S.tab(i).type), S.tab(i).corr, S.tab(i).amp_ratio), 'Units', 'normalized', 'FontSize', 10, 'VerticalAlignment', 'top');
+    title(a, {lab(S.tab(i).type), sprintf('r = %.3f, amp. ratio %.2f', S.tab(i).corr, S.tab(i).amp_ratio)}, 'FontSize', 10, 'FontWeight', 'normal');
 end
 annotation(f, 'textbox', [0.01 0.005 0.98 0.04], 'String', credit, 'EdgeColor', 'none', 'FontSize', 9, 'Color', [0.35 0.4 0.45]);
 save_fig_hq(f, c.figDir, 'das_recovered_events');  close(f);
