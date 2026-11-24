@@ -65,7 +65,7 @@ if isZoom, tgt = [E.cross(1) + 0.05, E.cross(2) - 0.05, E.cross(3) + 0.05];  cam
 else, tgt = [mean([min(X) max(X)]), mean([min(Y) max(Y)]), mean(F.z)]; end
 set_camera(ax, tgt, cam);  drawnow;
 %% labels: halo text, short leader lines, placed outside the fibre
-lab = struct('size', 7.5, 'weight', 'bold');  arr = char(8594);  AI = ai_labels();   % labels from the Stage AI output  o = sc.Sc.intr.outward;  ix = E.cross(1);  iy = E.cross(2);  iz = E.cross(3);
+lab = struct('size', 7.5, 'weight', 'bold');  arr = char(8594);  AI = ai_labels();  o = sc.Sc.intr.outward;  ix = E.cross(1);  iy = E.cross(2);  iz = E.cross(3);
 ztop = max(F.z) + 0.30;
 if isZoom
     halo_text(ax, ix + o(1) * 0.75, iy + o(2) * 0.75, iz + 0.22, AI.intr, lab, th.intLbl, sc);
