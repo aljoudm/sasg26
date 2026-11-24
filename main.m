@@ -10,5 +10,6 @@ run_das_sudair(true);               % F  engine on the longest channel       -> 
 das_figures();                      % F  figures                             -> poster_figs/das_*
 run_ai_sudair();                    % AI full-das AI interface (stub)         -> results/ai_sudair.mat, report/ai_results.md
 render_twin_sudair(300);            % E  3D twin                             -> poster_figs/twin3d.*
+render_twin_sudair(300, 'main', 'panels');   % E  twin with STATUS / legend / trace panels  -> poster_figs/twin3d_panels.*
 render_intruder_map(300);           % E2 intruder map                        -> poster_figs/intruder_map.*
 test_stageA; test_stageC; test_stageD; test_stageF; test_stageE; test_stageE2; test_stageAI;
