@@ -37,7 +37,20 @@ for i = 1:4
 end
 annotation(f, 'textbox', [0.01 0.005 0.98 0.04], 'String', credit, 'EdgeColor', 'none', 'FontSize', 9, 'Color', [0.35 0.4 0.45]);
 save_fig_hq(f, c.figDir, 'das_recovered_events');  close(f);
-fprintf('Saved poster_figs/das_waterfall and das_recovered_events\n');
+%% 3 detected events only (poster panel: large text; correlations are in the poster table)
+f = figure('Color', 'w', 'Position', [60 60 900 420], 'Visible', 'off');  light_theme(f);
+ax = axes(f, 'Position', [0.09 0.20 0.89 0.74]);  hold(ax, 'on');  ax.FontSize = 15;
+plot(ax, S.z / 1e3, S.act, '-', 'Color', [0 0.5 0.68], 'LineWidth', 0.8);  yline(ax, S.thr, '--', 'Color', [0.8 0.1 0.1], 'LineWidth', 1.4);
+text(ax, 0.1, S.thr, ' threshold', 'Color', [0.8 0.1 0.1], 'VerticalAlignment', 'bottom', 'FontSize', 15);
+for i = 1:numel(S.tab)
+    plot(ax, S.tab(i).z_est / 1e3, S.tab(i).peak_nm, 'o', 'MarkerSize', 8, 'MarkerFaceColor', [0.85 0.4 0.1], 'MarkerEdgeColor', 'none');
+    text(ax, S.tab(i).z_est / 1e3, S.tab(i).peak_nm * 1.1, sprintf(' %s: %.1f m ', lab(S.tab(i).type), S.tab(i).pos_err_m), 'HorizontalAlignment', ha{1 + mod(sum([S.tab.z0] < S.tab(i).z0), 2)}, 'VerticalAlignment', 'bottom', 'FontSize', 17, 'FontWeight', 'bold');
+end
+xlabel(ax, 'Distance along the Sudair channel (km)', 'FontSize', 16);  ylabel(ax, 'Activity (nm rms)', 'FontSize', 16);
+xlim(ax, [0 S.z(end) / 1e3]);  ylim(ax, [0 max(S.act) * 1.45]);
+annotation(f, 'textbox', [0.01 0.0 0.98 0.06], 'String', credit, 'EdgeColor', 'none', 'FontSize', 10, 'Color', [0.35 0.4 0.45]);
+save_fig_hq(f, c.figDir, 'das_detected_events');  close(f);
+fprintf('Saved poster_figs/das_waterfall, das_recovered_events and das_detected_events\n');
 end
 function light_theme(f)
 % Figures stay light on computers whose MATLAB desktop uses the dark theme (R2025a+).
