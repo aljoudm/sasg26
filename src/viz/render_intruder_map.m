@@ -9,7 +9,11 @@ c = sasg_config();  cfg = viz_cfg('light');  th = cfg.theme;  fn = cfg.font;  zc
 F = load(fullfile(c.resDir, 'placement.mat')).F;  Sc = load(fullfile(c.resDir, 'scenario.mat')).Sc;  Zs = load(fullfile(c.zonesDir, 'zones.mat'));
 S = run_das_sudair();
 %% reid row (read-only source), verified, not typed in
-rg = readtable('C:\Users\aljou\OneDrive\Desktop\full das\results\reid\reid_grid.csv', 'TextType', 'string');
+reidCsv = 'C:\Users\aljou\OneDrive\Desktop\full das\results\reid\reid_grid.csv';
+if ~isfile(reidCsv)   % other computers: read-only copy of the same file (third_party/fulldas_reid/PROVENANCE.md)
+    reidCsv = fullfile(fileparts(fileparts(fileparts(mfilename('fullpath')))), 'third_party', 'fulldas_reid', 'reid_grid.csv');
+end
+rg = readtable(reidCsv, 'TextType', 'string');
 sel = rg.camera_source == "fixed" & rg.spacing_m == 20 & rg.pairs_share == 0 & rg.position_error_m == 1 & rg.clock_offset_s == 0.2 & string(rg.crossing) == "False" & rg.camera_dropout == 0;
 assert(nnz(sel) == 1, 'reid row not unique');  acc = rg.person_link_acc(sel);  rate = rg.person_link_rate(sel);
 %% local frame (m) centred on the crossing
