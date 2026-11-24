@@ -19,3 +19,10 @@
 16. **No stair-step overlay.** The hi-res plant texture is blended into the base texture with a smooth alpha mask (75 m smoothstep) instead of a hard edge; risk cells are removed inside the fence and, outside, smoothed with alpha <= 0.25.
 17. **Light pulses** are short bright segments on the fibre (0.2 km, white core x2.4 + cyan glow x3.4 of the line width, every 3 km), nothing wider than the fibre glow. **Zone bands** are +-50 m, alpha 0.35. **Intruder** marker and heat patch are draped, 2 rings, outer radius 0.30 km; the 300 m red display glow on the fibre is kept (ASSUMED: display only).
 18. **Two versions.** `twin3d.png` / `twin3d_zoom.png` are clean (map only, small N arrow, small attribution in a semi-transparent white box). `twin3d_panels.png` has STATUS / legend / phi-OTDR panels in a strip below the map (`draw_trace_sudair`: walking / vehicle labels aligned left / right, shorter y label). Sizes: 2610x1500 (1.74:1) and 2000x1500 (4:3), 300 dpi.
+
+## AI stage
+19. **Same interface as full-das, no new classifier.** `third_party/fulldas_ai` is a read-only copy of full-das `ai_interface.m`, `ai_config.json`, `class_map.yaml` and the Brno confusion counts, in the full-das folder layout so the code runs unchanged. `use_real_ai = false` (stub).
+20. **Runs.** Base mode `uniform` at both ends of Pc_DAS (0.983 from the copied file; 0.993 from a temporary copy with only Pc changed) and the Brno `confusion_counts` sensitivity through the interface's own `AI_CLASSIFIER_MODE` switch. One fixed seed (Threefry 1) per run.
+21. **Calibration sine** is classified with true class `no_event` [ASSUMED] and excluded from the alarm logic. **Routing** follows full-das `respond_day`: threat class -> ALARM -> camera verification; a `vehicle` output for the access-road vehicle -> logged; other classes -> no alarm.
+22. **Figure labels** (twin, STATUS panel, trace panel, intruder map) are built by `src/ai/ai_labels.m` from the base run (Pc 0.983); `tests/test_stageAI.m` checks they match `report/ai_results.md`.
+

@@ -110,9 +110,9 @@ for k = 1:4, yy = 0.90 - (k - 1) * 0.13;  scatter(ka, 0.06, yy, 22, items{k, 2},
 text(ka, 0.04, 0.30, sprintf('SIMULATED (re-ID simulation): link accuracy %.4f,\nlink rate %.4f (fixed cameras, 20 m spacing,\n1.0 m position error, 0.2 s clock offset)', acc, rate), 'FontName', fn.name, 'FontSize', 6.6, 'Color', th.text, 'VerticalAlignment', 'middle', 'FontWeight', 'bold');
 text(ka, 0.04, 0.06, 'Ellipse sizes, camera range (55 m) and path are illustrative [ASSUMED].', 'FontName', fn.name, 'FontSize', 5.6, 'Color', th.muted, 'VerticalAlignment', 'middle');
 %% step strip
-ar = char(8594);  steps = {'1  Approach', '2  Fence crossing', '3  DAS detects: human', '4  Camera track linked', '5  ALARM in control room'};
+ar = char(8594);  AI = ai_labels();  steps = {'1  Approach', '2  Fence crossing', AI.step3, '4  Camera track linked', '5  ALARM in control room'};
 sa_ = axes(fig, 'Position', [0.008 0.012 0.982 0.185]);  hold(sa_, 'on');  axis(sa_, 'off');  xlim(sa_, [0 5]);  ylim(sa_, [0 1]);
-sub_ = {'intruder outside the fence', 'vibration on the fiber', 'localized, with error ellipse', 'DAS + camera track: same person', 'alarm + camera view to operator'};
+sub_ = {'intruder outside the fence', 'vibration on the fiber', sprintf('confidence %.2f, localized', AI.intr_conf), 'DAS + camera track: same person', 'alarm + camera view to operator'};
 for k = 1:5
     rectangle(sa_, 'Position', [k - 1 + 0.03, 0.05, 0.94, 0.9], 'FaceColor', th.panel, 'EdgeColor', th.panelEdge, 'Curvature', 0.08, 'LineWidth', 0.6);
     text(sa_, k - 0.5, 0.66, steps{k}, 'HorizontalAlignment', 'center', 'FontName', fn.name, 'FontSize', 8, 'FontWeight', 'bold', 'Color', th.frame);

@@ -1,0 +1,52 @@
+{
+  "use_real_ai": false,
+  "classifier": {
+    "mode": "uniform",
+    "comment": "TEMPORARY stub. mode 'uniform': correct with probability Pc, errors spread equally over the other classes (PLACEHOLDER shape). mode 'confusion': row-normalised matrix of a json file (confusion_file). mode 'confusion_counts': event-level COUNTS in confusion_counts_file (csv: first column = true class, then one column per predicted class); every call of classify_batch (one simulated day) draws each row from Dirichlet(counts + prior), so the error rates carry the uncertainty of the few events behind them. Change only this file to switch; no code edit.",
+    "Pc": 0.983,
+    "Pc_source": "Pc_DAS of the parameter table, low end of 0.983 to 0.993 (wang2024); 0.993 is the high-end sensitivity",
+    "confusion_file": "",
+    "confusion_counts_file": "results/classifier/T1s/confusion_matrix.csv",
+    "dirichlet_prior": 0.5,
+    "sensitivity_note": "The Brno confusion matrix (results/classifier/T1s/confusion_matrix.csv) is a SENSITIVITY only, labelled 'Brno, 4 test recordings, SENSITIVITY'; the base stays mode 'uniform' (Pc from the literature). In mode 'confusion_counts' every class missing from the matrix (running, digging, tampering, background, animal) falls back to the uniform stub."
+  },
+  "reidentify": {
+    "mode": "stub",
+    "comment": "added in the profiling stage"
+  },
+  "reid": {
+    "comment": "Re-identification (DAS track <-> camera / drone track). Design: docs/ReID_Design_and_Evaluation_Protocol.pdf. Error values are the planning values of the protocol (ASSUMED); the same values are rows reid_* of config/parameters_reviewed.tsv (tests/test_reid.py checks they agree). Thresholds gate_sigma and margin are re-chosen on development scenes by reid/evaluate.py (results/reid/thresholds.json) and then frozen.",
+    "pos_sd_das_m": 1.0,
+    "pos_sd_cam_fixed_m": 1.0,
+    "speed_sd_das": 0.05,
+    "speed_sd_cam": 0.1,
+    "cad_sd_das": 2.0,
+    "cad_sd_cam": 3.0,
+    "cad_cam_available": 1,
+    "height_sd_das": 8.0,
+    "height_sd_cam": 5.0,
+    "pop_speed_mean": 1.3,
+    "pop_speed_sd": 0.2,
+    "pop_height_mean": 165.0,
+    "pop_height_sd": 8.0,
+    "pop_cad_mean": 110.0,
+    "pop_cad_sd": 8.0,
+    "pair_gap_m": 1.0,
+    "pair_dv": 0.02,
+    "pair_dcad": 1.0,
+    "n_people": 20,
+    "n_windows": 3,
+    "window_s": 10.0,
+    "group_dist_m": 2.0,
+    "group_dv": 0.15,
+    "gate_sigma": 3.0,
+    "margin": 4.0,
+    "target_decided_acc": 0.97,
+    "pos_sd_cam_drone_m": {
+      "optimistic": 1.5,
+      "base": 2.5,
+      "pessimistic": 5.0,
+      "source": "optimistic and base: PROXY from Nalamothu et al. 2024 (arXiv 2410.12556), per-axis sigma = mean radial error / 1.25; static target, GPS type not stated, so optimistic. pessimistic 5 m: ASSUMED (source pending)"
+    }
+  }
+}

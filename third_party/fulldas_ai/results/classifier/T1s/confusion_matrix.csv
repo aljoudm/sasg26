@@ -1,0 +1,5 @@
+true,walking,running,vehicle,digging,climbing,tampering,no_event,other
+walking,4,0,0,0,0,0,0,0
+vehicle,0,0,2,0,0,0,0,0
+climbing,0,0,1,0,0,0,3,3
+other,0,0,0,0,0,0,0,3

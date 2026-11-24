@@ -1,6 +1,7 @@
 function draw_status_sudair(fig, pos, scene)
 % DRAW_STATUS_SUDAIR  ADAPTED COPY of DAS-map draw_status.m (a25fd0c): same panel, fonts, rows and ALARM / LOGGED lines; the rows are
 % the Sudair ones (fibre, interrogator, channels, sensing points, cameras). The Makkah "CCTV / UAV / patrols" and "Hajj pilgrims" rows are gone.
+AI = ai_labels();   % rows and note from the Stage AI output
 cfg = scene.cfg;  th = scene.th;  F = scene.fibre;  c = cfg.col;  fn = cfg.font;  ks = cfg.uiScale;
 ax = panel_axes(fig, pos, th, ks);
 hin = pos(4) * cfg.figSizeIn(2) / ks;
@@ -23,11 +24,11 @@ end
 plot(ax, [0.05 0.95], Y([y - 0.065 y - 0.065]), '-', 'Color', th.panelEdge, 'LineWidth', 0.5 * ks);
 y = y + 0.03;
 plot(ax, 0.075, Y(y), 'o', 'MarkerSize', 3.8 * ks, 'MarkerFaceColor', c.red, 'MarkerEdgeColor', 'none');
-txt(0.12, y, ['Intruder: detected ' char(8594) ' human ' char(8224)], th.text, fn.panel, 'left');
-txt(0.95, y, 'ALARM', th.intLbl, bold, 'right');
+txt(0.12, y, ['Intruder: AI ' AI.intr_class ' ' char(8224)], th.text, fn.panel, 'left');
+txt(0.95, y, AI.intr_route, th.intLbl, bold, 'right');
 y = y + 0.125;
 plot(ax, 0.075, Y(y), 'o', 'MarkerSize', 3.8 * ks, 'MarkerFaceColor', c.yellow, 'MarkerEdgeColor', 'none');
-txt(0.12, y, ['Vehicle on road ' char(8224)], th.text, fn.panel, 'left');
-txt(0.95, y, 'LOGGED', th.aniLbl, bold, 'right');
-txt(0.05, hin - 0.085, [char(8224) ' simulated scenario'], th.muted, fn.note, 'left');
+txt(0.12, y, ['Vehicle on road: AI ' AI.veh_class ' ' char(8224)], th.text, fn.panel, 'left');
+txt(0.95, y, AI.veh_route, th.aniLbl, bold, 'right');
+txt(0.05, hin - 0.085, [char(8224) ' simulated; ' AI.status], th.muted, fn.note, 'left');
 end

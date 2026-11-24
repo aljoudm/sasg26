@@ -40,9 +40,9 @@ ax.LineWidth = 0.5 * ks;   ax.TickDir = 'out';   ax.Box = 'off';   ax.YGrid = 'o
 xlabel(ax, 'Distance (km)', 'Color', th.muted, 'FontSize', fn.note.size);
 ylabel(ax, 'nm rms', 'Color', th.muted, 'FontSize', fn.note.size);
 % mapping rows (design inches from the panel bottom)
-ar = char(8594);   dg = char(8224);
-rows = {th.intLbl,  ['walking = map intruder: detected ' ar ' human ' ar ' ALARM ' dg];
-        th.aniLbl,  ['vehicle = map vehicle: detected ' ar ' on road ' ar ' logged ' dg];
+ar = char(8594);   dg = char(8224);   AI = ai_labels();   % from the Stage AI output
+rows = {th.intLbl,  ['walking = map intruder: detected ' ar ' AI ' AI.intr_class ' ' ar ' ' AI.intr_route ' ' dg];
+        th.aniLbl,  ['vehicle = map vehicle: AI ' AI.veh_class ' ' ar ' on road ' ar ' ' AI.veh_route ' ' dg];
         th.muted,   'digging, calibration: simulated only, not on the map'};
 for k = 1:3
     yy = 0.33 - (k - 1) * 0.12;

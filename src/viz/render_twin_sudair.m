@@ -65,16 +65,16 @@ if isZoom, tgt = [E.cross(1) + 0.05, E.cross(2) - 0.05, E.cross(3) + 0.05];  cam
 else, tgt = [mean([min(X) max(X)]), mean([min(Y) max(Y)]), mean(F.z)]; end
 set_camera(ax, tgt, cam);  drawnow;
 %% labels: halo text, short leader lines, placed outside the fibre
-lab = struct('size', 7.5, 'weight', 'bold');  arr = char(8594);  o = sc.Sc.intr.outward;  ix = E.cross(1);  iy = E.cross(2);  iz = E.cross(3);
+lab = struct('size', 7.5, 'weight', 'bold');  arr = char(8594);  AI = ai_labels();   % labels from the Stage AI output  o = sc.Sc.intr.outward;  ix = E.cross(1);  iy = E.cross(2);  iz = E.cross(3);
 ztop = max(F.z) + 0.30;
 if isZoom
-    halo_text(ax, ix + o(1) * 0.75, iy + o(2) * 0.75, iz + 0.22, ['Intruder: detected ' arr ' human ' arr ' ALARM'], lab, th.intLbl, sc);
+    halo_text(ax, ix + o(1) * 0.75, iy + o(2) * 0.75, iz + 0.22, AI.intr, lab, th.intLbl, sc);
     plot3(ax, [ix + o(1) * 0.15, ix + o(1) * 0.55], [iy + o(2) * 0.15, iy + o(2) * 0.55], [iz + 0.01 iz + 0.2], '-', 'Color', [th.intLbl 0.8], 'LineWidth', 0.7);
 else
-    halo_text(ax, ix + o(1) * 1.3, iy + o(2) * 1.3, iz + 0.30, ['Intruder: detected ' arr ' human ' arr ' ALARM'], lab, th.intLbl, sc);
+    halo_text(ax, ix + o(1) * 1.3, iy + o(2) * 1.3, iz + 0.30, AI.intr, lab, th.intLbl, sc);
     plot3(ax, [ix + o(1) * 0.1, ix + o(1) * 0.8], [iy + o(2) * 0.1, iy + o(2) * 0.8], [iz + 0.01 iz + 0.27], '-', 'Color', [th.intLbl 0.8], 'LineWidth', 0.7);
     vx = E.vehicle(1);  vy = E.vehicle(2);  vz = E.vehicle(3);
-    halo_text(ax, vx + 0.2, vy + 1.6, ztop + 0.25, ['Vehicle on access road ' arr ' logged'], lab, th.aniLbl, sc);
+    halo_text(ax, vx + 0.2, vy + 1.6, ztop + 0.25, AI.veh, lab, th.aniLbl, sc);
     plot3(ax, [vx vx + 0.2], [vy vy + 1.2], [vz + 0.01 ztop + 0.2], '-', 'Color', [th.aniLbl 0.8], 'LineWidth', 0.7);
     halo_text(ax, bx - 2.6, by + 0.9, ztop + 0.15, '380 kV substation (Hot)', lab, th.lblText, sc);
     plot3(ax, [bx - 1.5 bx - 0.12], [by + 0.85 by + 0.1], [ztop + 0.12 bz + 0.02], '-', 'Color', [th.lblText 0.6], 'LineWidth', 0.6);

@@ -11,6 +11,7 @@ Commercial interrogator engine parameters reused. Sudair has cameras only: no pa
 | D placement | done | `results/placement.*` (1 interrogator, 2 spare channels) |
 | E 3D twin, E2 intruder map | done | `poster_figs/twin3d.*`, `poster_figs/intruder_map.*` |
 | F DAS engine | done | `poster_figs/das_*`, `results/das_recovered_events.csv` (simulated, commercial interrogator parameters) |
+| AI classification | done (stub) | `report/ai_results.md` (full-das AI interface, use_real_ai = false, Pc 0.983 / 0.993 + Brno sensitivity; SIMULATED) |
 | G MILP and costs | not done | |
 
 Numbers with sources and regenerating scripts: `report/key_numbers.md`. Parameters with tags: `config/parameters_sasg26.tsv`. Decisions: `report/decisions.md`. Run: `RUN.md`.

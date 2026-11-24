@@ -1,0 +1,28 @@
+# class_map.yaml: Brno label (folder of the dataset) -> system class. NOTHING is dropped silently: every Brno label is listed with the reason.
+# Protocol: docs/Classifier_Evaluation_Protocol.pdf (Yomna, 22 Nov 2026), section 1. Brno facts: docs/brno_metadata.md.
+# alarm = the class raises an alarm in the system; context = vehicle, logged; none = no alarm.
+system_classes:
+  walking:     {alarm: true}
+  running:     {alarm: true}
+  digging:     {alarm: true}
+  climbing:    {alarm: true,  note: "climbing / fence contact"}
+  tampering:   {alarm: true,  note: "fibre tampering (touching or moving the cable)"}
+  vehicle:     {alarm: false, note: "context: vehicle on a road is logged"}
+  background:  {alarm: false, note: "nothing happening; called no_event in the AI contract and in the simulation"}
+  other:       {alarm: false, note: "Brno activities with no system equivalent, kept as one non-alarm class (decision 22 Nov: other stays a class in training)"}
+  animal:      {alarm: false, note: "ABSENT in Brno: no data at all; needs our own FEBUS data. The simulation stub uses Pc_animal_placeholder (PLACEHOLDER)"}
+
+brno_labels:
+  walk:         {class: walking,   reason: "walking people"}
+  running:      {class: running,   reason: "running people"}
+  construction: {class: digging,   reason: "construction / re-construction work (hammering, digging); the closest Brno activity to digging, an APPROXIMATION"}
+  fence:        {class: climbing,  reason: "fence impacts (fence_*, plot_*, kopani_plot_*); the closest Brno activity to climbing, an APPROXIMATION"}
+  manipulation: {class: tampering, reason: "manipulation of the fibre or fence; a SEPARATE class from climbing (protocol list) - this changes decision 10 of 22 Nov, which merged it with climbing; the user's 23 Nov list and the protocol keep them apart"}
+  car:          {class: vehicle,   reason: "cars"}
+  regular:      {class: background, reason: "regular activity of the campus (recording named regularshit): used as background / nothing; it contains passers-by and traffic, so it is NOT a clean quiet background"}
+  longboard:    {class: other,     reason: "longboard riding (longboard_*, longboardroad_*): not a system class, kept as non-alarm 'other'"}
+  openclose:    {class: other,     reason: "opening and closing (a gate or door): not a system class, kept as non-alarm 'other'"}
+
+dropped: []     # no Brno label is dropped; 'other' is the documented merge for the two without an equivalent
+
+# Evaluation roles are decided in config/splits.json (written once, before any training, with a fixed seed)
