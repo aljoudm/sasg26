@@ -7,7 +7,7 @@ set(groot, 'DefaultAxesXGrid', 'off', 'DefaultAxesYGrid', 'off');
 credit = 'Simulated, commercial interrogator parameters (DAS-Simulation engine, 3a8862b). Channel length 16.28 km (lead-in + half of the 32.3 km fence).';
 ha = {'left', 'right'};   % neighbouring event labels go to opposite sides so they do not overlap
 %% 1 phase waterfall
-f = figure('Color', 'w', 'Position', [60 60 940 540], 'Visible', 'off');  ax = axes(f);
+f = figure('Color', 'w', 'Position', [60 60 940 540], 'Visible', 'off');  light_theme(f);  ax = axes(f);
 imagesc(ax, S.WFz / 1e3, S.WFt, double(S.WF)');  set(ax, 'YDir', 'normal');  clim(ax, [0 40]);
 colormap(ax, flipud(gray));  cb = colorbar(ax);  cb.Label.String = 'Vibration amplitude (nm rms, 18 ms blocks)';
 xlabel(ax, 'Distance along the Sudair channel (km)');  ylabel(ax, 'Slow time (s)');  hold(ax, 'on');
@@ -18,7 +18,7 @@ end
 annotation(f, 'textbox', [0.01 0.005 0.98 0.04], 'String', credit, 'EdgeColor', 'none', 'FontSize', 9, 'Color', [0.35 0.4 0.45]);
 save_fig_hq(f, c.figDir, 'das_waterfall');  close(f);
 %% 2 recovered events: activity profile + true vs recovered time series
-f = figure('Color', 'w', 'Position', [60 60 1100 620], 'Visible', 'off');
+f = figure('Color', 'w', 'Position', [60 60 1100 620], 'Visible', 'off');  light_theme(f);
 tl = tiledlayout(f, 2, 4, 'TileSpacing', 'compact', 'Padding', 'compact');  tl.OuterPosition = [0 0.05 1 0.95];
 ax = nexttile(tl, 1, [1 4]);  hold(ax, 'on');
 plot(ax, S.z / 1e3, S.act, '-', 'Color', [0 0.5 0.68], 'LineWidth', 0.6);  yline(ax, S.thr, '--', 'Color', [0.8 0.1 0.1], 'LineWidth', 1);
@@ -33,11 +33,15 @@ for i = 1:4
     plot(a, S.t(m), S.TS{i}(1, m) * 1e9, '-', 'Color', [0.6 0.6 0.6], 'LineWidth', 1.4);
     plot(a, S.t(m), S.TS{i}(2, m) * 1e9, '-', 'Color', [0.8 0.1 0.1], 'LineWidth', 0.7);
     xlabel(a, 'Time (s)');  if i == 1, ylabel(a, 'Elongation (nm)'); legend(a, {'true', 'recovered'}, 'Location', 'northoutside', 'Orientation', 'horizontal', 'FontSize', 11); end
-    text(a, 0.02, 0.96, sprintf('%s: r = %.3f, amp. ratio %.2f', lab(S.tab(i).type), S.tab(i).corr, S.tab(i).amp_ratio), 'Units', 'normalized', 'FontSize', 11, 'VerticalAlignment', 'top');
+    text(a, 0.02, 0.96, sprintf('%s\nr = %.3f, amp. ratio %.2f', lab(S.tab(i).type), S.tab(i).corr, S.tab(i).amp_ratio), 'Units', 'normalized', 'FontSize', 10, 'VerticalAlignment', 'top');
 end
 annotation(f, 'textbox', [0.01 0.005 0.98 0.04], 'String', credit, 'EdgeColor', 'none', 'FontSize', 9, 'Color', [0.35 0.4 0.45]);
 save_fig_hq(f, c.figDir, 'das_recovered_events');  close(f);
 fprintf('Saved poster_figs/das_waterfall and das_recovered_events\n');
+end
+function light_theme(f)
+% Figures stay light on computers whose MATLAB desktop uses the dark theme (R2025a+).
+if exist('theme', 'file'), theme(f, 'light'); end
 end
 function s = lab(t)
 switch string(t), case "sine", s = 'calibration sine'; case "walk", s = 'walking'; case "dig", s = 'digging'; otherwise, s = 'vehicle'; end
