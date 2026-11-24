@@ -1,6 +1,6 @@
 function h = draw_trace_sudair(fig, pos, scene)
 % DRAW_TRACE_SUDAIR  ADAPTED COPY of DAS-map draw_trace.m (a25fd0c): the walking / vehicle labels are aligned left / right so they do not overlap.
-% DRAW_TRACE  DAS trace panel: output of the phi-OTDR simulation (DAS-Simulation branch febus-a1neo, cropped to one FEBUS channel). The mapping to the map is
+% DRAW_TRACE  DAS trace panel: output of the phi-OTDR simulation (DAS-Simulation, commercial interrogator parameters, cropped to one channel). The mapping to the map is
 % stated under the plot: walking = map intruder, vehicle = map vehicle; digging and the calibration sine are simulated only
 % (not placed on the map, neutral colour). Returns the plot axes and marker handles of the walking / vehicle peaks.
 cfg = scene.cfg;  th = scene.th;  sim = scene.sim;  fn = cfg.font;  ks = cfg.uiScale;

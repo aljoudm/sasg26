@@ -499,7 +499,7 @@ function loop(now) {
     const [d, f, base, plant] = await Promise.all([fetch("dem.json").then(r => r.json()), fetch("fibre.json").then(r => r.json()), img("base.jpg"), img("plant.jpg")]);
     dem = d; fib = f; let zmin = 1e9; for (const z of dem.z) zmin = Math.min(zmin, z); dem.zmin = zmin / 10;
     buildTerrain(base, plant); buildFibre(); buildPulses();
-    label("iu", "IU-1 · FEBUS A1-NEO · control room"); label("sub", "380 kV substation · Hot", "hot below");
+    label("iu", "Interrogator · control room"); label("sub", "380 kV substation · Hot", "hot below");
     $("legend").innerHTML = [3, 2, 1].map(z => `<div><i style="background:${ZCSS[z]}"></i>${ZN[z]} fence<em>${fib.zone_km[ZN[z]]} km</em></div>`).join("") +
       `<div><i style="background:#fff;box-shadow:0 0 6px #bdf"></i>Laser pulses out from IU-1, 2 channels<em>${fib.L_km} km</em></div>` +
       `<div><i style="background:#ffc478;box-shadow:0 0 6px #ffc478"></i>Rayleigh backscatter returning to IU-1<em></em></div>` +

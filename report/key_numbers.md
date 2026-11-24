@@ -32,7 +32,7 @@
 | Fibre total incl. lead-ins | 32.564 (boundary 32.304) | km | `results/placement.mat` | same |
 | Sensing points (fibre / 2 m) | 16152 | - | same | same |
 
-## Stage F: DAS engine on the Sudair channel, "simulated, FEBUS A1-NEO parameters" (`tests/test_stageF.m`, `src/das/run_das_sudair.m`)
+## Stage F: DAS engine on the Sudair channel, "simulated, commercial interrogator parameters" (`tests/test_stageF.m`, `src/das/run_das_sudair.m`)
 Engine DAS-Simulation 3a8862b unchanged; fibre = longest Sudair channel 16,282 m [DERIVED]; PRF 5.65 kHz, 11,286 pulses, 8,141 samples; gauge 20 m, resolution 10 m (`das_params.m`).
 | Event (channel position) | Position error (m) | Amplitude ratio | Correlation | Detected (threshold 7.23 nm) |
 | --- | --- | --- | --- | --- |

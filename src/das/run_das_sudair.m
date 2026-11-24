@@ -1,8 +1,8 @@
 function S = run_das_sudair(redo)
-% RUN_DAS_SUDAIR  Stage F. DAS-Simulation engine (third_party/das_engine, 3a8862b, FEBUS A1-NEO parameters), unchanged, with the
+% RUN_DAS_SUDAIR  Stage F. DAS-Simulation engine (third_party/das_engine, 3a8862b, commercial interrogator parameters), unchanged, with the
 % fibre length set to the longest Sudair channel (lead-in + sensing, from results/placement.mat). Events = engine defaults:
 % calibration sine, walking, digging, vehicle (define_events.m). Fence climbing: no engine model -> future work, not invented.
-% Results are labelled "simulated, FEBUS A1-NEO parameters". Saves results/das_sudair.mat (small; the waterfall is not stored).
+% Results are labelled "simulated, commercial interrogator parameters". Saves results/das_sudair.mat (small; the waterfall is not stored).
 if nargin < 1, redo = false; end
 c = sasg_config();  out = fullfile(c.resDir, 'das_sudair.mat');
 if isfile(out) && ~redo, S = load(out); S = S.S; return; end
@@ -40,7 +40,7 @@ for b = 1:nT
     q = sqrt(mean(blk .^ 2, 2));  Q(:, b) = max(reshape(q, 10, nz), [], 1)';
 end
 S.WF = Q * 1e9;  S.WFz = z(5:10:nz * 10);  S.WFt = ((1:nT) - 0.5) * nb / P.PRF;
-S.label = 'simulated, FEBUS A1-NEO parameters';
+S.label = 'simulated, commercial interrogator parameters';
 if ~exist(c.resDir, 'dir'), mkdir(c.resDir); end
 save(out, 'S');
 T = struct2table(tab);  writetable(T, fullfile(c.resDir, 'das_recovered_events.csv'));

@@ -5,7 +5,7 @@ addpath(fullfile(fileparts(mfilename('fullpath')), 'third_party', 'das_engine'))
 fetch_boundary_sudair();            % A  boundary, substations, roads        -> data/
 prepare_terrain_sudair();           % B  DEM + imagery                       -> data/dem/
 run_zones();                        % C  zones                               -> results_zones/
-place_fibre_sudair();               % D  FEBUS placement                     -> results/placement.*
+place_fibre_sudair();               % D  interrogator placement                  -> results/placement.*
 run_das_sudair(true);               % F  engine on the longest channel       -> results/das_sudair.mat (also needs scenario_sudair)
 das_figures();                      % F  figures                             -> poster_figs/das_*
 render_twin_sudair(300);            % E  3D twin                             -> poster_figs/twin3d.*

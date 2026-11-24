@@ -4,7 +4,7 @@ osm_way	OSM id of Sudair PV IPP	Selects the boundary polygon	1317477364	id	[COMP
 A_osm	Area of OSM polygon	Gate check: -3.7% vs published	29.08	km2	[COMPUTED-MAP]	team	approved		computed
 L_boundary	Boundary length (haversine, DAS-map method)	Fibre length basis	32.304	km	[COMPUTED-MAP]	team	approved		computed
 L_boundary_planar	Boundary length (planar ring, optimization method)	Cross-check	32.304	km	[COMPUTED-MAP]	team	approved		computed
-R_DAS	Range per channel	FEBUS A1-NEO 20 km option	20	km	[DATASHEET]	team	approved		source
+R_DAS	Range per channel	Commercial interrogator 20 km option	20	km	[DATASHEET]	team	approved		source
 N_ch_active	Active channels per interrogator	One per direction	2	-	[DERIVED: two directions along boundary]	team	approved		derived
 T_op	Interrogator operating range	Housed in control room/substation building	5-40	degC	[DATASHEET]	team	approved		source
 dz_res	Spatial resolution	sensing points = fibre/2 m (channel spacing)	2	m	[SIM SETTING]	team	approved		sim

@@ -1,6 +1,6 @@
 function png = render_intruder_map(dpi)
 % RENDER_INTRUDER_MAP  Stage E2. 2D satellite map of ONE simulated intruder: trajectory -> fence crossing -> DAS detection with its
-% localisation-error ellipse -> DAS track linked to the nearest fixed-camera track inside its FOV cone -> control room.
+% localization-error ellipse -> DAS track linked to the nearest fixed-camera track inside its FOV cone -> control room.
 % FIXED CAMERAS ONLY (no drones, no patrols, no person profiling / height). Geometry, ellipse sizes, camera spacing / range are
 % ILLUSTRATIVE [ASSUMED]; the only quoted number is the full-das re-ID grid row (read from its CSV, read-only):
 %   camera_source=fixed, spacing_m=20, pairs_share=0, position_error_m=1.0, clock_offset_s=0.2, crossing=False, camera_dropout=0.
@@ -93,18 +93,18 @@ scatter(ov, bx, by, 46, 's', 'MarkerFaceColor', 'w', 'MarkerEdgeColor', th.frame
 for k = 1:2, i2 = F.ch(k).idx;  quiver(ov, rx(i2(30)), ry(i2(30)), rx(i2(34)) - rx(i2(30)), ry(i2(34)) - ry(i2(30)), 0, 'Color', th.frame, 'LineWidth', 1.1, 'MaxHeadSize', 6); end
 rectangle(ov, 'Position', [-hw / 1e3, -hh / 1e3, 2 * hw / 1e3, 2 * hh / 1e3] + [-0.06 -0.06 0.12 0.12], 'EdgeColor', [0.85 0.1 0.1], 'LineWidth', 1.4);
 scatter(ov, 0, 0, 22, 'o', 'MarkerFaceColor', [0.85 0.1 0.1], 'MarkerEdgeColor', 'w');
-text(ov, bx + 0.25, by + 0.35, 'control room /\newlineinterrogator', 'FontName', fn.name, 'FontSize', 6.5, 'Color', th.iuLbl, 'FontWeight', 'bold');
-text(ov, 0.25, -0.5, 'intrusion', 'FontName', fn.name, 'FontSize', 6.5, 'Color', th.intLbl, 'FontWeight', 'bold');
+text(ov, bx + 0.25, by + 0.35, 'control room /\newlineinterrogator', 'FontName', fn.name, 'FontSize', 8.5, 'Color', th.iuLbl, 'FontWeight', 'bold');
+text(ov, 0.25, -0.5, 'intrusion', 'FontName', fn.name, 'FontSize', 8.5, 'Color', th.intLbl, 'FontWeight', 'bold');
 axis(ov, 'equal');  axis(ov, 'off');  xlim(ov, [min(rx) - 0.4, max(rx) + 0.4]);  ylim(ov, [min(ry) - 0.4, max(ry) + 0.4]);
 annotation(fig, 'rectangle', [0.665 0.515 0.325 0.475], 'Color', th.panelEdge, 'LineWidth', 0.6);
-text(ov, 0.02, 0.03, sprintf('Fibre path to alarm: %.1f km', Sc.intr.z_m / 1e3), 'Units', 'normalized', 'FontName', fn.name, 'FontSize', 6.2, 'Color', th.muted);
+text(ov, 0.02, 0.03, sprintf('Fiber path to alarm: %.1f km', Sc.intr.z_m / 1e3), 'Units', 'normalized', 'FontName', fn.name, 'FontSize', 8.2, 'Color', th.muted);
 %% right text block: key + quoted number
 ka = axes(fig, 'Position', [0.665 0.215 0.325 0.29]);  hold(ka, 'on');  axis(ka, 'off');  xlim(ka, [0 1]);  ylim(ka, [0 1]);
 rectangle(ka, 'Position', [0 0 1 1], 'FaceColor', th.panel, 'EdgeColor', th.panelEdge, 'LineWidth', 0.6);
-items = {[0.85 0.1 0.1], 'o', 'Intruder trajectory (simulated)'; [0.95 0.55 0], 'o', 'DAS track + 1-sigma localisation ellipse'; [0.1 0.4 0.95], '^', 'Camera track (nearest fixed camera, in its FOV cone)'; [0.2 0.55 1], 's', 'Fixed cameras, 20 m spacing (illustrative)'};
-for k = 1:4, yy = 0.90 - (k - 1) * 0.13;  scatter(ka, 0.06, yy, 22, items{k, 2}, 'MarkerFaceColor', items{k, 1}, 'MarkerEdgeColor', 'w');  text(ka, 0.12, yy, items{k, 3}, 'FontName', fn.name, 'FontSize', 6.3, 'Color', th.text, 'VerticalAlignment', 'middle'); end
-text(ka, 0.04, 0.30, sprintf('SIMULATED (full-das re-ID grid): link accuracy %.4f,\nlink rate %.4f (fixed cameras, 20 m spacing,\n1.0 m position error, 0.2 s clock offset)', acc, rate), 'FontName', fn.name, 'FontSize', 6.2, 'Color', th.text, 'VerticalAlignment', 'middle', 'FontWeight', 'bold');
-text(ka, 0.04, 0.06, 'Ellipse sizes, camera range (55 m) and path are illustrative [ASSUMED].', 'FontName', fn.name, 'FontSize', 5.4, 'Color', th.muted, 'VerticalAlignment', 'middle');
+items = {[0.85 0.1 0.1], 'o', 'Intruder trajectory (simulated)'; [0.95 0.55 0], 'o', 'DAS track + 1-sigma localization ellipse'; [0.1 0.4 0.95], '^', 'Camera track (nearest fixed camera, in its FOV cone)'; [0.2 0.55 1], 's', 'Fixed cameras, 20 m spacing (illustrative)'};
+for k = 1:4, yy = 0.90 - (k - 1) * 0.13;  scatter(ka, 0.06, yy, 22, items{k, 2}, 'MarkerFaceColor', items{k, 1}, 'MarkerEdgeColor', 'w');  text(ka, 0.12, yy, items{k, 3}, 'FontName', fn.name, 'FontSize', 8.2, 'Color', th.text, 'VerticalAlignment', 'middle'); end
+text(ka, 0.04, 0.30, sprintf('SIMULATED (re-ID simulation): link accuracy %.4f,\nlink rate %.4f (fixed cameras, 20 m spacing,\n1.0 m position error, 0.2 s clock offset)', acc, rate), 'FontName', fn.name, 'FontSize', 8.0, 'Color', th.text, 'VerticalAlignment', 'middle', 'FontWeight', 'bold');
+text(ka, 0.04, 0.06, 'Ellipse sizes, camera range (55 m) and path are illustrative [ASSUMED].', 'FontName', fn.name, 'FontSize', 7.0, 'Color', th.muted, 'VerticalAlignment', 'middle');
 %% step strip
 ar = char(8594);  steps = {'1  Approach', '2  Fence crossing', '3  DAS detects: human', '4  Camera track linked', '5  ALARM in control room'};
 sa_ = axes(fig, 'Position', [0.008 0.012 0.982 0.185]);  hold(sa_, 'on');  axis(sa_, 'off');  xlim(sa_, [0 5]);  ylim(sa_, [0 1]);
