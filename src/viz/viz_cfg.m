@@ -15,10 +15,12 @@ cfg.imageryCredit = 'Imagery: Esri, Vantor, Earthstar Geographics, and the GIS U
 cfg.zoneCol = [0.20 0.45 0.80; 0.98 0.80 0.15; 0.85 0.12 0.12];
 % camera: DAS-map cfg.camera = az 180, el 30, dist 53, fov 30
 c0 = sasg_config();
-mk = readmatrix('C:\Users\aljou\Downloads\DAS Map\data\boundary_perimeter.csv');          % Makkah fibre path (read-only source)
+mkCsv = 'C:\Users\aljou\Downloads\DAS Map\data\boundary_perimeter.csv';          % Makkah fibre path (read-only source)
 sd = readmatrix(c0.boundaryCsv);
 diagKm = @(r) hypot(range(r(:,2)) * 111.195 * cosd(mean(r(:,1))), range(r(:,1)) * 111.195);
-cfg.diag_makkah_km = diagKm(mk);  cfg.diag_sudair_km = diagKm(sd);
+if isfile(mkCsv), cfg.diag_makkah_km = diagKm(readmatrix(mkCsv));
+else, cfg.diag_makkah_km = 46.658;   % [DERIVED] same formula on aljoudm/DAS-map- a25fd0c data/boundary_perimeter.csv (other computers)
+end  cfg.diag_sudair_km = diagKm(sd);
 cfg.camDistScale = 0.88;                                                                    % only knob for framing adjustments
 cfg.camera = struct('az', 180, 'el', 30, 'fov', 30, 'dist', 53 * cfg.diag_sudair_km / cfg.diag_makkah_km * cfg.camDistScale);
 end
