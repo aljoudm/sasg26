@@ -52,3 +52,6 @@ feather_m	Feather of the hi-res plant texture over the base texture	No hard rect
 pulse	Light pulse: segment length / spacing / lift (fix round)	Short segments on the fibre	0.2 / 3 / 0.003	km / km / km display	[ASSUMED: display only]	team	provisional		assumed
 drape_lift	Lift of fibre / bands above the drawn DEM surface (display km, = 1.5 m real at x4)	Draped, only avoids z-fighting	0.006	km	[ASSUMED: display only]	team	provisional	limit was 3 m x VERT_EXAG = 0.012	assumed
 ring_r	Intruder rings / heat patch outer radius	Ground marker, 2 rings max	0.15, 0.30 / 0.30	km	[ASSUMED: display only]	team	provisional		assumed
+Pc_DAS	DAS classification accuracy (AI stub)	Pc of the uniform AI stub; Stage AI runs both ends	0.983 - 0.993	-	[SOURCE: wang2024 via Shao 2025] (full-das config/parameters_reviewed.tsv, row Pc_DAS)	team	provisional	full-das tags it ASSUMED: literature figures from random-window splits are probably optimistic	assumed
+ai_seed	Seed of the Stage AI runs	Fixed random stream so the AI table is reproducible	1	-	[SIM SETTING] RandStream Threefry	team	approved		sim
+ai_sine_truth	True class given to the calibration sine	ai_interface needs a true class; the sine is excluded from the alarm logic	no_event	-	[ASSUMED: a calibration tone is not an activity]	team	provisional		assumed

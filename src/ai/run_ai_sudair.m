@@ -2,9 +2,10 @@ function A = run_ai_sudair()
 % RUN_AI_SUDAIR  Stage AI. Classifies the four Stage F events (results/das_sudair.mat) with the SAME AI interface full-das used for Makkah:
 % third_party/fulldas_ai/src/ai/ai_interface.m (read-only copy, see its PROVENANCE.md). use_real_ai = false: TEMPORARY stub. No new classifier.
 %
-%   Runs (one fixed seed each, RandStream Threefry seed 1):
-%     Pc_0.983          base, mode 'uniform', Pc = 0.983 (file value)      Pc_DAS low end  [SOURCE: wang2024 via Shao 2025]
-%     Pc_0.993          base, mode 'uniform', Pc = 0.993                   Pc_DAS high end [SOURCE: wang2024 via Shao 2025]
+%   Pc_DAS, the seed and the sine's true class come from config/parameters_sasg26.tsv (rows Pc_DAS, ai_seed, ai_sine_truth).
+%   Runs (one fixed seed each, RandStream Threefry):
+%     Pc_<low>          base, mode 'uniform', Pc = low end of Pc_DAS (0.983, also the value in the copied ai_config.json)
+%     Pc_<high>         base, mode 'uniform', Pc = high end of Pc_DAS (0.993, from a temporary copy with only Pc changed)
 %     Brno_sensitivity  mode 'confusion_counts' (Brno matrix), labelled "Brno, 4 test recordings, SENSITIVITY"
 %   Routing as full-das respond_day: threat class -> ALARM -> camera verification; a 'vehicle' output for the vehicle on the access road ->
 %   logged; any other class -> no alarm. The calibration sine is classified but excluded from the alarm logic.
@@ -14,15 +15,16 @@ function A = run_ai_sudair()
 c = sasg_config();  aiRoot = fullfile(c.root, 'third_party', 'fulldas_ai');
 S = run_das_sudair();
 type = string({S.tab.type})';  name = string({S.tab.name})';
-truth = type;  truth(type == "walk") = "walking";  truth(type == "dig") = "digging";  truth(type == "sine") = "no_event";
+Pc = sscanf(strrep(param(c, 'Pc_DAS'), '-', ' '), '%f')';  assert(numel(Pc) == 2, 'Pc_DAS must be a range');   % [SOURCE: wang2024 via Shao 2025]
+seed = str2double(param(c, 'ai_seed'));  sineTruth = string(param(c, 'ai_sine_truth'));
+truth = type;  truth(type == "walk") = "walking";  truth(type == "dig") = "digging";  truth(type == "sine") = sineTruth;
 event = name;  event(type == "walk") = "Walking = map intruder";  event(type == "vehicle") = "Vehicle = map vehicle (access road)";
 onRoad = type == "vehicle";                       % scenario_sudair: the engine vehicle is the map vehicle on an access road
 excluded = type == "sine";
-seed = 1;
-runs = struct('id', {"Pc_0.983", "Pc_0.993", "Brno_sensitivity"}, 'mode', {"uniform", "uniform", "confusion_counts"}, 'Pc', {0.983, 0.993, 0.983}, ...
-    'label', {"base: uniform stub, Pc 0.983 (Pc_DAS low end, wang2024 via Shao 2025)", ...
-              "base: uniform stub, Pc 0.993 (Pc_DAS high end, wang2024 via Shao 2025)", ...
-              "Brno, 4 test recordings, SENSITIVITY (classes missing from the matrix fall back to the uniform stub, Pc 0.983)"});
+runs = struct('id', {sprintf("Pc_%.3f", Pc(1)), sprintf("Pc_%.3f", Pc(2)), "Brno_sensitivity"}, 'mode', {"uniform", "uniform", "confusion_counts"}, 'Pc', {Pc(1), Pc(2), Pc(1)}, ...
+    'label', {sprintf("base: uniform stub, Pc %.3f (Pc_DAS low end, wang2024 via Shao 2025)", Pc(1)), ...
+              sprintf("base: uniform stub, Pc %.3f (Pc_DAS high end, wang2024 via Shao 2025)", Pc(2)), ...
+              sprintf("Brno, 4 test recordings, SENSITIVITY (classes missing from the matrix fall back to the uniform stub, Pc %.3f)", Pc(1))});
 threatSet = ["walking" "running" "vehicle" "digging" "climbing" "tampering"];     % full-das src/response/respond_day.m
 T = table();
 for r = 1:numel(runs)
@@ -45,7 +47,7 @@ for r = 1:numel(runs)
     T = [T; table(repmat(runs(r).id, numel(pred), 1), event, truth, pred, round(conf, 2), route, ...
         'VariableNames', {'run', 'event', 'true_class', 'predicted_class', 'confidence', 'route'})]; %#ok<AGROW>
 end
-A.T = T;  A.runs = runs;  A.seed = seed;  A.base = "Pc_0.983";
+A.T = T;  A.runs = runs;  A.seed = seed;  A.base = runs(1).id;
 A.note = "AI: full-das interface, stub (Pc from literature); real ViT-1D classifier trained/tested on Brno only, not yet connected";
 A.label = "SIMULATED";
 save(fullfile(c.resDir, 'ai_sudair.mat'), 'A');
@@ -100,4 +102,11 @@ w('| Twin, vehicle | %s |\n', L.veh);
 w('| Intruder map, step 3 | %s |\n', L.step3);
 w('| STATUS panel note | %s |\n', L.status);
 fclose(f);
+end
+
+function v = param(c, key)
+% Value of row KEY in config/parameters_sasg26.tsv (column 4).
+P = readcell(fullfile(c.root, 'config', 'parameters_sasg26.tsv'), 'FileType', 'text', 'Delimiter', '\t');
+i = find(strcmp(P(:, 1), key), 1);  assert(~isempty(i), 'parameter %s not in parameters_sasg26.tsv', key);
+v = P{i, 4};  if isnumeric(v), v = num2str(v); end
 end
