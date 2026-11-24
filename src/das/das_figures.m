@@ -5,6 +5,7 @@ c = sasg_config();  addpath(fullfile(c.root, 'third_party', 'das_engine'));  S =
 if ~exist(c.figDir, 'dir'), mkdir(c.figDir); end
 set(groot, 'DefaultAxesXGrid', 'off', 'DefaultAxesYGrid', 'off');
 credit = 'Simulated, commercial interrogator parameters (DAS-Simulation engine, 3a8862b). Channel length 16.28 km (lead-in + half of the 32.3 km fence).';
+ha = {'left', 'right'};   % neighbouring event labels go to opposite sides so they do not overlap
 %% 1 phase waterfall
 f = figure('Color', 'w', 'Position', [60 60 940 540], 'Visible', 'off');  ax = axes(f);
 imagesc(ax, S.WFz / 1e3, S.WFt, double(S.WF)');  set(ax, 'YDir', 'normal');  clim(ax, [0 40]);
@@ -24,7 +25,7 @@ plot(ax, S.z / 1e3, S.act, '-', 'Color', [0 0.5 0.68], 'LineWidth', 0.6);  yline
 text(ax, 0.1, S.thr, ' threshold (median + 8 MAD)', 'Color', [0.8 0.1 0.1], 'VerticalAlignment', 'bottom');
 for i = 1:numel(S.tab)
     plot(ax, S.tab(i).z_est / 1e3, S.tab(i).peak_nm, 'o', 'MarkerFaceColor', [0.85 0.4 0.1], 'MarkerEdgeColor', 'none');
-    text(ax, S.tab(i).z_est / 1e3, S.tab(i).peak_nm * 1.08, sprintf('%s: error %.1f m', lab(S.tab(i).type), S.tab(i).pos_err_m), 'HorizontalAlignment', 'center', 'FontSize', 12);
+    text(ax, S.tab(i).z_est / 1e3, S.tab(i).peak_nm * 1.08, sprintf('%s: error %.1f m', lab(S.tab(i).type), S.tab(i).pos_err_m), 'HorizontalAlignment', ha{1 + mod(sum([S.tab.z0] < S.tab(i).z0), 2)}, 'FontSize', 12);
 end
 xlabel(ax, 'Distance (km)');  ylabel(ax, 'Activity (nm rms)');  xlim(ax, [0 S.z(end) / 1e3]);  ylim(ax, [0 max(S.act) * 1.25]);
 for i = 1:4
